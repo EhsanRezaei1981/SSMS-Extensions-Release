@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Removes the Jarvis SQL Formatter from SQL Server Management Studio.
+    Removes the Jarvis SSMS Extension from SQL Server Management Studio.
 
 .DESCRIPTION
     Finds the extension by reading the identity out of every installed extension.vsixmanifest,
     rather than by guessing a folder name. That matters: VSIXInstaller.exe installs into a
     randomly named folder such as "5iwnnhvg.ybn", while a -Method Copy install lands in a folder
-    called "Jarvis.SqlFormatter". Scanning the manifests catches both, plus any older copy left
+    called "Jarvis.SSMSExtension". Scanning the manifests catches both, plus any older copy left
     behind by a previous version.
 
     Both the per user folder and the machine wide one under the SSMS install are searched.
@@ -37,8 +37,14 @@ param(
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SsmsCommon.ps1"
 
-$extensionId = 'Jarvis.SqlFormatter.ce715d37-1a20-4603-8cad-53388d856cf2'
-$displayName = 'Jarvis SQL Formatter'
+$extensionId = 'Jarvis.SSMSExtension.ce715d37-1a20-4603-8cad-53388d856cf2'
+
+# Installs from before the rename carry the old identity. Removing means removing, so this takes
+# either — otherwise "uninstall" would leave a working copy behind and look like it had failed.
+$legacyExtensionId = 'Jarvis.SqlFormatter.ce715d37-1a20-4603-8cad-53388d856cf2'
+$extensionIds = @($extensionId, $legacyExtensionId)
+
+$displayName = 'Jarvis SSMS Extension'
 
 # ---------------------------------------------------------------------------------------
 # Locating SSMS
@@ -76,7 +82,11 @@ function Find-InstalledCopies {
             if (-not (Test-Path $manifest)) { continue }
 
             try { $text = Get-Content $manifest -Raw -ErrorAction Stop } catch { continue }
-            if ($text -notmatch [regex]::Escape($extensionId)) { continue }
+            $matched = $false
+            foreach ($id in $extensionIds) {
+                if ($text -match [regex]::Escape($id)) { $matched = $true; break }
+            }
+            if (-not $matched) { continue }
 
             # Take the Version off the Identity element. A plain Version="..." match would
             # pick up PackageManifest Version="2.0.0", which is the schema version.

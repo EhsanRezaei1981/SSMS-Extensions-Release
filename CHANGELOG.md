@@ -7,6 +7,50 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ---
 
+## 2026.903.2.1
+
+The major goes to 2 because this renames everything the code calls itself.
+
+**Changed**
+
+- **`Jarvis.SqlFormatter` is now `Jarvis.SSMSExtension`** throughout: namespaces, assemblies,
+  project and folder names, the solution, and the package class (`JarvisSqlFormatterPackage` is
+  now `JarvisSsmsExtensionPackage`). The shipped assemblies are `Jarvis.SSMSExtension.Core.dll`
+  and `Jarvis.SSMSExtension.Vsix.dll`. Names that genuinely mean the formatter — the
+  `Jarvis ▸ SQL Formatter` menu, `FormattingService`, the `jsqlfmt` CLI — are unchanged, because
+  those really are about formatting.
+
+**Upgrading from 2026.903.1.11 or earlier**
+
+- The **VSIX identity changed with the name**, so the shell sees a new extension rather than an
+  upgrade and will not replace the old one on its own. Both register the same package GUID, so
+  two installs at once means a Jarvis menu that misbehaves, not two versions side by side.
+  `install.ps1` now removes a pre-rename copy before installing, `uninstall.ps1` and
+  **Jarvis ▸ Uninstall Jarvis...** remove either, and `check-registration.ps1` reports one if it
+  finds it left behind.
+- **Nothing of yours moves.** Snippets and query history stay in `%APPDATA%\Jarvis\`, and your
+  Options are keyed on the package GUID, which has not changed.
+
+## 2026.903.1.11
+
+**Added**
+
+- **Jarvis ▸ Uninstall Jarvis...** removes the extension without leaving SSMS, through the
+  shell's own extension manager, so it goes the same way Extensions, Manage Extensions,
+  Uninstall would take it: marked now, gone on the next restart. **The snippet file and the
+  query history are kept**, and the confirmation names both paths rather than just promising
+  it. If the shell will not do it — a per machine install needs administrator rights — it says
+  so and points at `uninstall.ps1` instead of failing quietly.
+
+## 2026.903.1.10
+
+**Changed**
+
+- **Options...** now sits directly under **Jarvis** instead of inside **Jarvis ▸ SQL Formatter**.
+  It stopped being formatter-only some time ago — it holds the IntelliSense settings and the
+  snippet and history file paths as well — so hiding it under the formatter sub menu was
+  misleading. The command is now `Jarvis.Options` rather than `Jarvis.FormatterOptions`.
+
 ## 2026.903.1.9
 
 **Added**

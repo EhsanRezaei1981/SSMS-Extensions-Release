@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Installs the Jarvis SQL Formatter into SQL Server Management Studio.
+    Installs the Jarvis SSMS Extension into SQL Server Management Studio.
 
 .DESCRIPTION
     When more than one SSMS is installed you are asked which one to install into, and you can
@@ -46,8 +46,14 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SsmsCommon.ps1"
 
 $root = Split-Path -Parent $PSScriptRoot
-$extensionId = 'Jarvis.SqlFormatter.ce715d37-1a20-4603-8cad-53388d856cf2'
-$folderName = 'Jarvis.SqlFormatter'
+$extensionId = 'Jarvis.SSMSExtension.ce715d37-1a20-4603-8cad-53388d856cf2'
+
+# Anything installed before the extension was renamed carries the old identity. The shell treats
+# it as a different extension, so it is not upgraded or replaced — but it registers the same
+# package GUID, so leaving one behind gives two Jarvis menus fighting over it rather than an old
+# version sitting harmlessly beside a new one. It is removed before this one goes in.
+$legacyExtensionId = 'Jarvis.SqlFormatter.ce715d37-1a20-4603-8cad-53388d856cf2'
+$folderName = 'Jarvis.SSMSExtension'
 
 if ($Uninstall) {
     # One implementation only. uninstall.ps1 finds the extension by reading manifests, which
@@ -134,11 +140,11 @@ if (-not $VsixPath) {
     }
 
     if (-not $VsixPath) {
-        $VsixPath = Join-Path $root 'artifacts\Jarvis.SqlFormatter.vsix'
+        $VsixPath = Join-Path $root 'artifacts\Jarvis.SSMSExtension.vsix'
     }
 
     if (-not (Test-Path $VsixPath)) {
-        $VsixPath = Join-Path $root 'src\Jarvis.SqlFormatter.Vsix\bin\Release\Jarvis.SqlFormatter.Vsix.vsix'
+        $VsixPath = Join-Path $root 'src\Jarvis.SSMSExtension.Vsix\bin\Release\Jarvis.SSMSExtension.Vsix.vsix'
     }
 }
 
@@ -179,6 +185,56 @@ function Test-Installed {
     return $null
 }
 
+<#
+.SYNOPSIS
+    Folders holding an install from before the rename.
+.DESCRIPTION
+    Matched on the old identity only. Test-Installed deliberately does not look for it: that one
+    answers "did the package I just installed land", and an old copy answering yes would turn a
+    failed install into a reported success.
+#>
+function Find-LegacyCopies {
+    param([string]$ExtensionsFolder)
+
+    $found = New-Object System.Collections.Generic.List[string]
+
+    if (-not $ExtensionsFolder -or -not (Test-Path $ExtensionsFolder)) {
+        return $found
+    }
+
+    foreach ($dir in Get-ChildItem $ExtensionsFolder -Directory -ErrorAction SilentlyContinue) {
+        $manifest = Join-Path $dir.FullName 'extension.vsixmanifest'
+        if (-not (Test-Path $manifest)) { continue }
+
+        $text = Get-Content $manifest -Raw -ErrorAction SilentlyContinue
+        if ($text -and $text -match [regex]::Escape($legacyExtensionId)) {
+            $found.Add($dir.FullName)
+        }
+    }
+
+    return $found
+}
+
+<#
+.SYNOPSIS
+    Takes out any pre-rename install, so only one Jarvis is left registered.
+#>
+function Remove-LegacyCopies {
+    param([Parameter(Mandatory)][psobject]$Target)
+
+    foreach ($path in (Find-LegacyCopies -ExtensionsFolder $Target.ExtensionsFolder)) {
+        Write-Host "  removing the pre-rename install at $path" -ForegroundColor Yellow
+
+        try {
+            Remove-Item -LiteralPath $path -Recurse -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Warning ("  could not remove {0}: {1}" -f $path, $_.Exception.Message)
+            Write-Warning "  remove that folder by hand, or SSMS will show two Jarvis menus."
+        }
+    }
+}
+
 function Install-Into {
     param([Parameter(Mandatory)][psobject]$Target)
 
@@ -188,6 +244,7 @@ function Install-Into {
     Write-Host ("  extensions  {0}" -f $Target.ExtensionsFolder)
 
     Assert-SsmsClosed -Installation $Target
+    Remove-LegacyCopies -Target $Target
 
     if ($Method -eq 'Installer') {
         $installer = Join-Path $Target.IdePath 'VSIXInstaller.exe'

@@ -18,7 +18,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.1.9**
+**Latest release: 2026.903.2.1**
 
 Get the files, either way:
 
@@ -639,18 +639,26 @@ the answer to the steps it runs. If SSMS lives somewhere unusual, point `SSMS_ID
 refuses the SKU, it falls back to unpacking the extension straight into
 
 ```
-%LOCALAPPDATA%\Microsoft\SSMS\<version>_<id>\Extensions\Jarvis.SqlFormatter\
+%LOCALAPPDATA%\Microsoft\SSMS\<version>_<id>\Extensions\Jarvis.SSMSExtension\
 ```
 
 which is where SSMS looks for per user extensions. You can force that route with
 `.\install.ps1 -Method Copy`.
 
-To remove it:
+To remove it from inside SSMS, **Jarvis ▸ Uninstall Jarvis...** hands the extension to the
+shell's own extension manager and it goes on the next restart — the same route as Extensions,
+Manage Extensions, Uninstall.
+
+Or with SSMS closed:
 
 ```powershell
 .\uninstall.ps1            # asks first; -Force skips the prompt
 .\uninstall.ps1 -DryRun    # list what would be removed, change nothing
 ```
+
+Neither route touches your snippet file or your query history. They live in `%APPDATA%\Jarvis\`,
+outside the extension folder, so reinstalling finds them where they were. Delete them yourself
+if you want them gone.
 
 ## Style profiles
 

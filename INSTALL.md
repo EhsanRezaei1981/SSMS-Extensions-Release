@@ -1,4 +1,4 @@
-# Jarvis SQL Formatter 2026.903.1.9
+# Jarvis SSMS Extension 2026.903.2.1
 
 A T-SQL formatter and IntelliSense for SQL Server Management Studio 21 and 22.
 
@@ -15,7 +15,14 @@ answers in advance. Verify it afterwards with:
 
 ## Removing it
 
+From inside SSMS: **Jarvis > Uninstall Jarvis...**, then restart when it asks.
+
+Or, with SSMS closed:
+
     .\uninstall.ps1
+
+Either way your snippet file and query history are left alone, so reinstalling
+picks them up where they were.
 
 ## Updating to this build over an older one
 
@@ -29,8 +36,8 @@ answers in advance. Verify it afterwards with:
 
 | file | what it is |
 |---|---|
-| Jarvis.SqlFormatter-2026.903.1.9.vsix | the extension |
-| jsqlfmt-2026.903.1.9.zip | the command line formatter, for hooks and CI |
+| Jarvis.SSMSExtension-2026.903.2.1.vsix | the extension |
+| jsqlfmt-2026.903.2.1.zip | the command line formatter, for hooks and CI |
 | install.ps1, uninstall.ps1, update.ps1 | what you run |
 | check-registration.ps1, doctor.ps1 | for when something does not work |
 | README.md | the full documentation |

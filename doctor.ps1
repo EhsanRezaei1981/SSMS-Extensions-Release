@@ -50,7 +50,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
 $packageGuid = 'ce715d37-1a20-4603-8cad-53388d856cf2'
-$extensionId = "Jarvis.SqlFormatter.$packageGuid"
+$extensionId = "Jarvis.SSMSExtension.$packageGuid"
 
 function Write-Head($text) {
     Write-Host ""
@@ -76,12 +76,12 @@ function Get-InstalledCopies {
         $text = Get-Content $manifest -Raw -ErrorAction SilentlyContinue
         if (-not $text -or $text -notmatch [regex]::Escape($extensionId)) { continue }
 
-        $dll = Join-Path $dir.FullName 'Jarvis.SqlFormatter.Vsix.dll'
+        $dll = Join-Path $dir.FullName 'Jarvis.SSMSExtension.Vsix.dll'
         $result += [pscustomobject]@{
             Path    = $dir.FullName
             Version = if ($text -match '<Identity[^>]*\sVersion="([^"]+)"') { $Matches[1] } else { '?' }
             Built   = if (Test-Path $dll) { (Get-Item $dll).LastWriteTime } else { $null }
-            HasPkgdef = Test-Path (Join-Path $dir.FullName 'Jarvis.SqlFormatter.Vsix.pkgdef')
+            HasPkgdef = Test-Path (Join-Path $dir.FullName 'Jarvis.SSMSExtension.Vsix.pkgdef')
         }
     }
 
@@ -126,7 +126,7 @@ function Invoke-Diagnosis {
         }
     }
 
-    $built = Join-Path $root 'src\Jarvis.SqlFormatter.Vsix\bin\Release\Jarvis.SqlFormatter.Vsix.dll'
+    $built = Join-Path $root 'src\Jarvis.SSMSExtension.Vsix\bin\Release\Jarvis.SSMSExtension.Vsix.dll'
     if (Test-Path $built) {
         $b = (Get-Item $built).LastWriteTime
         Write-Host ("         latest build " + $b) -ForegroundColor DarkGray
@@ -165,7 +165,7 @@ function Invoke-Diagnosis {
 
             Write-Check $registered 'Package in the private registry' $(
                 if ($registered) {
-                    'the pkgdef was merged, so Tools, Options should list Jarvis SQL Formatter'
+                    'the pkgdef was merged, so Tools, Options should list Jarvis'
                 }
                 else {
                     'NOT merged - that is why there is no menu; run this script with -Fix'
