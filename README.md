@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.1.15**
+**Latest release: 2026.903.1.16**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.903.1.15 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.15/Jarvis.SSMSExtension-2026.903.1.15.zip).
+2026.903.1.16 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.16/Jarvis.SSMSExtension-2026.903.1.16.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.903.1.15.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.15/Jarvis.SSMSExtension-2026.903.1.15.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.903.1.16.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.16/Jarvis.SSMSExtension-2026.903.1.16.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -603,8 +603,17 @@ you are already looking at, so nothing is queried twice, and a selection maps ju
 └──────────────────────┴──────────────────────────────┘
 ```
 
-Every geometry column becomes its own layer, with its own colour, a tick to switch it off, its
-shape count and SRID, and **Zoom to fit**. Clicking a shape shows the rest of its row.
+Every geometry column becomes its own layer, with a tick to switch it off, its shape count and
+SRID, and **Zoom to fit**. Clicking a shape shows the rest of its row.
+
+**Every record is drawn in its own colour**, so shapes that touch or overlap stay apart. The
+colour comes from the row number rather than a list, stepping the hue far enough each time that
+neighbouring rows never look alike, and each layer starts from a different point so two layers
+still read as two layers.
+
+**All the result sets are drawn, not just the one in focus.** A batch that returns several sets
+stacks a grid for each, and every one of them is read; layers are then labelled
+`Result 2 · VectorData` so two sets with a column of the same name stay apart.
 
 ### Binary or text, either will do
 

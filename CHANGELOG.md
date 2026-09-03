@@ -11,6 +11,20 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Added**
 
+- **Every result set is mapped, not only the one in focus.** A batch that returns several sets
+  stacks a grid for each; all of them are now read, and their layers are labelled
+  `Result 2 · VectorData` so two sets carrying a column of the same name do not appear as two
+  identical rows in the pane.
+
+**Changed**
+
+- **Each record is drawn in its own colour** rather than one colour per column, which had
+  everything on the map the same blue. The colour comes from the row number, stepping the hue by
+  the golden angle so consecutive rows are always far apart — a thousand rows produce well over
+  seven hundred distinct colours, which a fixed palette cannot. Layers each start from a
+  different point, so two layers still read as two layers. The swatch in the pane is a strip of
+  the layer's real colours instead of a solid block that matched nothing on the map.
+
 - **Spatial columns already converted to text are mapped too.** A column run through `STAsText`,
   a view that does the conversion, or a `varchar` somebody keeps shapes in — all of them draw,
   alongside the binary the grid normally shows. PostGIS's `SRID=4326;POINT (...)` form is read as
