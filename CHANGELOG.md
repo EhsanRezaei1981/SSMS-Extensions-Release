@@ -7,6 +7,26 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ---
 
+## 2026.903.2.2
+
+**Added**
+
+- **Update checking.** Jarvis asks the public release page whether a newer version has been
+  published, **every time SSMS starts**, and tells you when there is one — showing the version
+  and what changed. **Nothing is ever downloaded or installed without you choosing it**: the
+  notice has Download, Release page, Skip this version and Remind me later, and closing it means
+  later. Installing still needs SSMS closed, because VSIXInstaller refuses to run while it is
+  open, and the notice says so rather than starting something that fails afterwards.
+- **Jarvis ▸ Updates ▸ Check for Updates...** does the same on demand, and unlike the automatic
+  check it also says when you are already up to date.
+- **Jarvis ▸ Updates ▸ Check Automatically**, and **Tools ▸ Options ▸ Jarvis ▸ Updates ▸ Check
+  for updates automatically**, turn the startup check on and off. The tick box on the notice
+  itself is the same setting, so it can be turned off from the thing that is interrupting you.
+- The check is anonymous, sends nothing about you or your servers, runs off the UI thread and
+  never delays SSMS starting. No network, a proxy that refuses, or a repository with no releases
+  all mean "no news" — silent, never an error. It also reads plain **tags** when a version was
+  tagged without a Release attached, so it still works before Release pages exist.
+
 ## 2026.903.2.1
 
 The major goes to 2 because this renames everything the code calls itself.

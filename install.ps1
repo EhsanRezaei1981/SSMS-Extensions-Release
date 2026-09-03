@@ -277,10 +277,42 @@ function Install-Into {
             if (Test-Path $installerLog) {
                 Write-Host "  --- what VSIXInstaller said ---" -ForegroundColor Cyan
                 Get-Content $installerLog |
-                    Where-Object { $_ -match 'error|warn|skip|not applicable|target|sku|signature|Install' } |
+                    Where-Object { $_ -match 'error|warn|skip|not applicable|target|sku|signature|Install|block|shut down|Exception' } |
                     Select-Object -Last 20 |
                     ForEach-Object { '    ' + $_.Trim() }
                 Write-Host "    (full log: $installerLog)" -ForegroundColor DarkGray
+            }
+
+            # Exit 2004 is BlockingProcessesException: something holding the shell's assemblies
+            # is running, very often an MSBuild node left over from a build rather than SSMS
+            # itself. Falling back to a copy here is the wrong move: the copy succeeds, is never
+            # registered, and the symptom is a missing Jarvis menu with a script that said it
+            # worked. Better to stop and name the processes.
+            $blockers = @()
+            if (Test-Path $installerLog) {
+                $blockers = Get-Content $installerLog |
+                    Select-String -Pattern '^\s*-\s*(\S+\.exe)\s*\(ID\s*(\d+)\)' |
+                    ForEach-Object { "{0} (PID {1})" -f $_.Matches[0].Groups[1].Value, $_.Matches[0].Groups[2].Value } |
+                    Select-Object -Unique
+            }
+
+            if ($process.ExitCode -eq 2004 -or $blockers.Count -gt 0) {
+                Write-Host ""
+                Write-Host "  VSIXInstaller refused because these are running:" -ForegroundColor Yellow
+                if ($blockers.Count -gt 0) {
+                    $blockers | ForEach-Object { Write-Host "      $_" -ForegroundColor Yellow }
+                }
+                Write-Host ""
+                Write-Host "  These block the installer even when SSMS is closed. MSBuild.exe is" -ForegroundColor Yellow
+                Write-Host "  usually a leftover build worker, cleared with:" -ForegroundColor Yellow
+                Write-Host "      dotnet build-server shutdown" -ForegroundColor Yellow
+                Write-Host "      Get-Process MSBuild,VBCSCompiler -EA SilentlyContinue | Stop-Process -Force" -ForegroundColor Yellow
+                Write-Host ""
+
+                throw ("VSIXInstaller was blocked by another process, so nothing was installed. " +
+                       "Close the processes listed above and run this again. Not falling back to a " +
+                       "direct copy, because a copied folder is not registered and would leave you " +
+                       "with no Jarvis menu and no error.")
             }
 
             Write-Warning "  Falling back to a direct copy."

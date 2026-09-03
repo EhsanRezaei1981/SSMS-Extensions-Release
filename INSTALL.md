@@ -1,4 +1,4 @@
-# Jarvis SSMS Extension 2026.903.2.1
+# Jarvis SSMS Extension 2026.903.2.2
 
 A T-SQL formatter and IntelliSense for SQL Server Management Studio 21 and 22.
 
@@ -36,8 +36,8 @@ picks them up where they were.
 
 | file | what it is |
 |---|---|
-| Jarvis.SSMSExtension-2026.903.2.1.vsix | the extension |
-| jsqlfmt-2026.903.2.1.zip | the command line formatter, for hooks and CI |
+| Jarvis.SSMSExtension-2026.903.2.2.vsix | the extension |
+| jsqlfmt-2026.903.2.2.zip | the command line formatter, for hooks and CI |
 | install.ps1, uninstall.ps1, update.ps1 | what you run |
 | check-registration.ps1, doctor.ps1 | for when something does not work |
 | README.md | the full documentation |

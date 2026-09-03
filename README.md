@@ -18,41 +18,34 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.2.1**
+**Latest release: 2026.903.2.2**
 
-Get the files, either way:
+### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
-```powershell
-git clone https://github.com/EhsanRezaei1981/SSMS-Extensions-Release.git
-cd SSMS-Extensions-Release
-```
+That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
+2026.903.2.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.2/Jarvis.SSMSExtension-2026.903.2.2.zip).
 
-or press **Code ▸ Download ZIP** on this page and extract it somewhere.
-
-Then **close SSMS** and run, from that folder:
+It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
+the extracted folder:
 
 ```powershell
 .\install.ps1
 ```
 
-That is the whole install. It finds SSMS on its own, picks the newest package under
-[`releases/`](releases), and hands it to the `VSIXInstaller.exe` inside SSMS. Start SSMS and
-the **Jarvis** menu is on the menu bar.
+That is the whole install. It finds SSMS on its own and hands the package to the
+`VSIXInstaller.exe` inside SSMS. Start SSMS and the **Jarvis** menu is on the menu bar.
 
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
+**Just the extension?** [Jarvis.SSMSExtension-2026.903.2.2.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.2/Jarvis.SSMSExtension-2026.903.2.2.vsix) — double click it
+and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
+remove an older copy, and verify the package actually registered rather than assuming it did.
+
 ### Updating
 
-The same script. Pull the new version and run it again — there is no need to uninstall first:
-
-```powershell
-git pull
-.\install.ps1
-```
-
-Downloaded the ZIP instead? Download the new one, extract it, and run `.\install.ps1` from
-there. SSMS must be closed either way.
+Download the new release, extract it, and run `.\install.ps1` from there. There is no need to
+uninstall first, and SSMS must be closed either way.
 
 ### If something looks wrong
 
@@ -61,9 +54,12 @@ there. SSMS must be closed either way.
 .\uninstall.ps1     # remove it; -Force skips the prompt
 ```
 
-Every release stays under [`releases/`](releases) with its own `SHA256SUMS.txt`, so an older
-one can be installed with `.\install.ps1 -VsixPath releases\<version>\<file>.vsix`.
-What changed in each is in [CHANGELOG.md](CHANGELOG.md).
+Every version, with its notes and its own `SHA256SUMS`, is on the
+[Releases page](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases). What changed in each is in [CHANGELOG.md](CHANGELOG.md).
+
+> The **Source code (zip)** and **Source code (tar.gz)** on each release are added by GitHub
+> automatically for the tag. They are a snapshot of this repository — the scripts and docs — not
+> the extension. The files listed above are the ones to download.
 
 The source for all of this lives in [https://github.com/EhsanRezaei1981/SSMS-Extensions](https://github.com/EhsanRezaei1981/SSMS-Extensions).
 
