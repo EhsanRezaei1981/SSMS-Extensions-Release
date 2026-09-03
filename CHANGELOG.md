@@ -7,6 +7,19 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ---
 
+## Unreleased
+
+**Added**
+
+- **Spatial columns already converted to text are mapped too.** A column run through `STAsText`,
+  a view that does the conversion, or a `varchar` somebody keeps shapes in — all of them draw,
+  alongside the binary the grid normally shows. PostGIS's `SRID=4326;POINT (...)` form is read as
+  well, including its SRID. Text needs no decoding and no spatial assembly, so it works even
+  where the binary route cannot, and the message when nothing is found now says so instead of
+  claiming `STAsText` columns are not recognised.
+- A column is only treated as spatial when its values actually parse, so a text column holding
+  the bare word `POINT` is left alone rather than becoming a layer of nothing.
+
 ## 2026.903.3.5
 
 **Changed**
