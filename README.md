@@ -18,12 +18,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.2.3**
+**Latest release: 2026.903.3.5**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.903.2.3 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.3/Jarvis.SSMSExtension-2026.903.2.3.zip).
+2026.903.3.5 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.3.5/Jarvis.SSMSExtension-2026.903.3.5.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -38,7 +38,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.903.2.3.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.3/Jarvis.SSMSExtension-2026.903.2.3.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.903.3.5.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.3.5/Jarvis.SSMSExtension-2026.903.3.5.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -193,8 +193,10 @@ Two courtesies worth knowing: if you already had SSMS IntelliSense off yourself,
 off again **leaves it off** — Jarvis only restores what Jarvis turned off. And uninstalling or
 disabling the extension hands it back automatically.
 
-It is **off by default**. Turning somebody's IntelliSense off uninvited is not something an
-extension should do.
+It is **on from a fresh install**, so Jarvis works the way it is meant to without a setup step.
+That does switch SSMS's own IntelliSense off — only one list should ever appear — and the two
+courtesies above are why that is safe to undo: turn Jarvis IntelliSense off and SSMS's comes
+back exactly as you had it.
 
 ### The list
 

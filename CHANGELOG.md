@@ -7,6 +7,98 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ---
 
+## 2026.903.3.5
+
+**Changed**
+
+- **The address search completes as you type.** Matches appear after a short pause in typing
+  rather than on Enter — three letters is enough — and Enter still works. It waits for the pause
+  instead of firing per keystroke, so "Sandton City" is one look-up rather than twelve, and an
+  answer that arrives after a newer one is dropped rather than flickering the list back to
+  results for half a word.
+- On **OpenStreetMap** the typing goes to Photon rather than Nominatim. Nominatim's usage policy
+  names autocomplete as a use it does not allow; Photon is the same OpenStreetMap data from a
+  service built for typing into. Pressing Enter still uses Nominatim. TomTom is asked in
+  typeahead mode, which is what its Search API is for.
+
+## 2026.903.3.4
+
+**Fixed**
+
+- **Delete, Home, End and the arrow keys work in the map's search box.** The map opened on
+  SSMS's own UI thread, so the shell's message loop pre-translated those keys into editor
+  commands before the text box ever saw them — it was not ignoring them, it was never told. The
+  map now runs on its own thread with its own message loop, and SSMS is made its owner by window
+  handle instead, so it still floats above SSMS and minimises with it. It no longer blocks SSMS
+  while open either.
+
+**Changed**
+
+- The search is one rounded field with the magnifier inside it and a clear cross, rather than a
+  labelled box beside a Go button, and each result is shown on two lines — the name, then the
+  rest of the address in grey. Geocoders answer with one long comma separated line, which at the
+  width of the pane made every result look the same. Escape clears the search and its marker.
+
+## 2026.903.3.3
+
+**Fixed**
+
+- **Coordinates are read longitude first**, which is how geometry columns are actually
+  populated. The previous build read every value as geography first and trusted a validity
+  check to catch the difference — but a Johannesburg point stored as `(28.05, -26.20)` reads as
+  latitude 28.05, longitude -26.20, which is perfectly valid and puts it in the Indian Ocean.
+  Values are now read exactly as stored and the order is worked out from them: a coordinate past
+  90 can only be a longitude, so those settle themselves whatever the setting says. Where the
+  numbers cannot settle it, **Tools ▸ Options ▸ Jarvis ▸ Map ▸ Coordinates are longitude first**
+  decides, and each layer's swap tick shows what was assumed rather than hiding it.
+- Self intersecting polygons are drawn instead of skipped. Validity was being used to tell
+  geography from geometry, and `STIsValid` rejects them — so ordinary rows the grid was happily
+  showing quietly never appeared.
+
+**Added**
+
+- **Address search on the map.** Type an address, press Enter, pick from the matches and the map
+  goes there and marks it. The provider drawing the map does the searching — TomTom, Google or
+  OpenStreetMap's Nominatim — so the key already entered for the map is the only one needed.
+  It searches on Enter rather than as you type, because every keystroke would be a request to
+  somebody else's service.
+
+## 2026.903.3.2
+
+**Changed**
+
+- **Jarvis IntelliSense is on from a fresh install.** It was off, on the reasoning that an
+  extension should not switch somebody's IntelliSense off uninvited — but the point of
+  installing Jarvis is to use it, and a feature nobody finds is a feature that does not exist.
+  SSMS's own IntelliSense is switched off while it is on, so only one list ever appears, and
+  turning Jarvis IntelliSense off puts SSMS's back exactly as it was. An existing install keeps
+  whatever you had chosen; only a machine with no Jarvis setting yet gets the new default.
+
+## 2026.903.3.1
+
+**Added**
+
+- **Geometry on a map.** **Jarvis ▸ Results ▸ Show on Map...** draws the spatial columns of the
+  results grid — points, lines and polygons, and the multi and collection forms of each — on a
+  real map with pan and zoom. It reads the grid you are already looking at, so nothing is
+  queried twice, and a selection maps just that selection.
+- **A layer pane beside the map.** Every geometry column becomes its own layer with its own
+  colour, a tick to switch it off, its shape count, its SRID, and a **zoom to fit**. Clicking a
+  shape shows the rest of its row.
+- **The map is yours to choose.** TomTom by default, Google or OpenStreetMap on the window
+  itself. TomTom and Google need your own API key — **Tools ▸ Options ▸ Jarvis ▸ Map** — and
+  without one Jarvis says so and offers OpenStreetMap, which needs none, rather than showing an
+  empty window. Google is drawn through its own API because its terms do not allow its tiles
+  in another map library.
+- **A swap lat/long tick per layer.** SQL Server stores `geometry` and `geography` coordinates
+  the opposite way round and the grid does not say which a column is — the same bytes read one
+  way give `POINT (28.05 -26.20)` and the other `POINT (-26.20 28.05)`. Jarvis reads geography
+  first and checks it is valid, which rejects planar coordinates, but where the guess is wrong
+  the fix is one tick rather than shapes silently in the wrong hemisphere.
+- Curved geometry — `CIRCULARSTRING`, `COMPOUNDCURVE`, `CURVEPOLYGON` — is **counted and
+  reported, never approximated**: there is no GeoJSON for a curve, and drawing a guess would put
+  something on the map the database did not say.
+
 ## 2026.903.2.3
 
 Same extension as 2026.903.2.2. What changed is the release itself, which that version got wrong.

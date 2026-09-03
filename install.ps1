@@ -296,6 +296,40 @@ function Install-Into {
                     Select-Object -Unique
             }
 
+            <#
+                Build workers are ours to clear, so clear them and try once more.
+
+                MSBuild and VBCSCompiler linger after a build purely as a cache. They are not
+                somebody's work, and update.ps1 builds immediately before installing, so these
+                are usually the workers it started itself. Anything else blocking — SSMS, Visual
+                Studio — is left well alone and reported.
+            #>
+            $buildWorkers = @($blockers | Where-Object { $_ -match '^(MSBuild|VBCSCompiler)\.exe' })
+
+            if ($blockers.Count -gt 0 -and $buildWorkers.Count -eq $blockers.Count) {
+                Write-Host "  Only build processes are in the way; stopping them and trying again." -ForegroundColor Yellow
+
+                & dotnet build-server shutdown 2>&1 | Out-Null
+                Get-Process -Name MSBuild, VBCSCompiler -ErrorAction SilentlyContinue |
+                    ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+                Start-Sleep -Milliseconds 800
+
+                Remove-Item -LiteralPath $installerLog -ErrorAction SilentlyContinue
+
+                $process = Start-Process -FilePath $installer `
+                    -ArgumentList '/quiet', "/logFile:`"$installerLog`"", "`"$VsixPath`"" -Wait -PassThru
+
+                $landed = Test-Installed -ExtensionsFolder $Target.ExtensionsFolder
+
+                if ($process.ExitCode -eq 0 -and $landed) {
+                    Write-Host "  installed to $landed" -ForegroundColor Green
+                    Update-SsmsConfiguration -Installation $Target
+                    return $true
+                }
+
+                Write-Warning ("  Still blocked after clearing them (VSIXInstaller returned {0})." -f $process.ExitCode)
+            }
+
             if ($process.ExitCode -eq 2004 -or $blockers.Count -gt 0) {
                 Write-Host ""
                 Write-Host "  VSIXInstaller refused because these are running:" -ForegroundColor Yellow
