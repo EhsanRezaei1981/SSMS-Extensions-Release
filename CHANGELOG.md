@@ -7,6 +7,21 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ---
 
+## 2026.903.2.3
+
+Same extension as 2026.903.2.2. What changed is the release itself, which that version got wrong.
+
+**Fixed**
+
+- **The download links work.** 2026.903.2.2 was pushed as a tag with no GitHub Release behind it,
+  so every `releases/download/...` link in the README answered 404 — the bundle, the `.vsix` and
+  the permanent latest link alike. Publishing now **refuses** to push when it cannot create a
+  Release, rather than publishing a page telling people to fetch files that are not there.
+- **The README no longer links to the source repository.** It is not public, so that link was a
+  404 for every visitor and pointed at a private repository besides. It is now behind a switch
+  that is off, and turning it on makes the publish check anonymously that the repository really
+  is public before it will go ahead.
+
 ## 2026.903.2.2
 
 **Added**

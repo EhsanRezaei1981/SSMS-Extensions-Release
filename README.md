@@ -18,12 +18,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.2.2**
+**Latest release: 2026.903.2.3**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.903.2.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.2/Jarvis.SSMSExtension-2026.903.2.2.zip).
+2026.903.2.3 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.3/Jarvis.SSMSExtension-2026.903.2.3.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -38,7 +38,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.903.2.2.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.2/Jarvis.SSMSExtension-2026.903.2.2.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.903.2.3.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.2.3/Jarvis.SSMSExtension-2026.903.2.3.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -61,7 +61,7 @@ Every version, with its notes and its own `SHA256SUMS`, is on the
 > automatically for the tag. They are a snapshot of this repository — the scripts and docs — not
 > the extension. The files listed above are the ones to download.
 
-The source for all of this lives in [https://github.com/EhsanRezaei1981/SSMS-Extensions](https://github.com/EhsanRezaei1981/SSMS-Extensions).
+
 
 ---
 
