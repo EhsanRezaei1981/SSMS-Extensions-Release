@@ -12,18 +12,19 @@ It started as a formatter and is no longer only that. Under one **Jarvis** menu:
 | **Snippets** | a shortcut and Tab, from a file that is yours to edit |
 | **Query history** | every query you run, searchable by text, server and date |
 | **Export** | the results grid to a real `.xlsx` or to pipe delimited CSV, split into files you can actually open |
+| **Map** | geometry and geography columns drawn on a real map, a layer per column, with address search |
 | **F12** | the definition of the procedure under the caret, open and ready to change |
 
 Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x64).
 
 ## Download and install
 
-**Latest release: 2026.903.3.5**
+**Latest release: 2026.903.1.13**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.903.3.5 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.3.5/Jarvis.SSMSExtension-2026.903.3.5.zip).
+2026.903.1.13 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.13/Jarvis.SSMSExtension-2026.903.1.13.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -38,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.903.3.5.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.3.5/Jarvis.SSMSExtension-2026.903.3.5.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.903.1.13.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.13/Jarvis.SSMSExtension-2026.903.1.13.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -76,8 +77,7 @@ Jarvis
 │     ├── Format Selection          Ctrl+K, Ctrl+F
 │     ├── Copy as Formatted
 │     ├── Format All Open Documents
-│     ├── Format on Save             off by default
-│     └── Options...
+│     └── Format on Save             off by default
 ├── Active Style ▸
 │     ├── Jarvis Standard
 │     ├── Jarvis Gold
@@ -97,13 +97,20 @@ Jarvis
 │     └── Clear Query History...
 ├── Results ▸
 │     ├── Export Results to Excel...
-│     └── Export Results to CSV (pipe delimited)...
+│     ├── Export Results to CSV (pipe delimited)...
+│     └── Show on Map...
 ├── Snippets ▸
 │     ├── Expand on Tab             on/off
 │     ├── Edit Snippets...
 │     ├── Reload Snippets
 │     └── List Snippets             Ctrl+K, Ctrl+L
-└── About Jarvis...
+├── Updates ▸
+│     ├── Check for Updates...
+│     └── Check Automatically        on by default
+├── Options...
+├── Licence...
+├── About Jarvis...
+└── Uninstall Jarvis...
 ```
 
 The same commands are on the **editor right click menu** under a Jarvis sub menu, and on a
@@ -573,6 +580,87 @@ A long export runs on a background thread with a progress window and a **Cancel*
 shell stays usable and an export started by mistake can be stopped. Reading the rows out of the
 grid has to happen on the UI thread — the grid will only answer its owner — but the message
 queue is pumped as it goes, so the window stays live throughout.
+
+## Geometry on a map
+
+**Jarvis ▸ Results ▸ Show on Map...** draws the spatial columns of the results grid on a real
+map — points, lines and polygons, and the multi and collection forms of each. It reads the grid
+you are already looking at, so nothing is queried twice, and a selection maps just that selection.
+
+```
+┌─ Layers ─────────────┬──────────────────────────────┐
+│ 🔍 Search an address │                              │
+│                      │      ●───────●               │
+│ Map  [ TomTom    ▾ ] │      │       │    pan, zoom  │
+│ [ Zoom to fit ]      │      ●───────●    click a    │
+│                      │                  shape for   │
+│ ▣ ■ route            │        ●         its row     │
+│   1 204 shapes       │                              │
+│   ☐ Swap lat/long    │                              │
+│                      │                              │
+│ ▣ ■ boundary         │                              │
+│   38 shapes, SRID 4326                              │
+└──────────────────────┴──────────────────────────────┘
+```
+
+Every geometry column becomes its own layer, with its own colour, a tick to switch it off, its
+shape count and SRID, and **Zoom to fit**. Clicking a shape shows the rest of its row.
+
+### Which map
+
+TomTom by default, and **Google** or **OpenStreetMap** from the window itself. TomTom and Google
+need an API key of your own — **Tools ▸ Options ▸ Jarvis ▸ Map** — and without one Jarvis says
+which key is missing and offers OpenStreetMap, which needs none, rather than showing you an empty
+window. Google is drawn through its own API rather than as tiles, because its terms do not allow
+its tiles in another map library.
+
+### Address search
+
+Type an address and matches appear as you go, from three letters. Pick one and the map goes there
+and marks it; Escape clears it. The provider drawing the map does the searching, so the key
+already entered for the map is the only one needed. On OpenStreetMap the typing goes to Photon,
+which is the same OpenStreetMap data from a service built for typing into — Nominatim, which
+Enter uses, does not permit autocomplete.
+
+### Which way round your coordinates are
+
+SQL Server stores `geometry` and `geography` the opposite way round, and nothing in the results
+grid says which a column is. The same bytes read one way give `POINT (28.05 -26.20)` and the
+other `POINT (-26.20 28.05)` — one is Johannesburg, the other is the Indian Ocean, and both are
+perfectly valid, so no amount of checking the value can separate them.
+
+Jarvis reads the values exactly as stored and works the order out from them: a coordinate past 90
+can only be a longitude, so those settle themselves. Where the numbers cannot settle it —
+Johannesburg at 28° east is inside latitude range either way — **Tools ▸ Options ▸ Jarvis ▸ Map ▸
+Coordinates are longitude first** decides, and each layer's **Swap lat/long** tick shows what was
+assumed and corrects it in one click.
+
+Curved geometry — `CIRCULARSTRING`, `COMPOUNDCURVE`, `CURVEPOLYGON` — is counted and reported as
+skipped, never approximated: there is no GeoJSON for a curve, and drawing a guess would put
+something on the map the database did not say. An SRID that is not latitude and longitude is
+flagged on its layer rather than drawn somewhere wrong.
+
+The map opens in its own window with its own message loop, so Delete, Home, End and the arrow
+keys work in the search box — on SSMS's thread the shell claims those keys as editor commands
+before a text box can see them — and SSMS stays usable while it is open.
+
+## Updates
+
+Jarvis checks the public release page each time SSMS starts and tells you when there is a newer
+version, showing what changed. **Nothing is downloaded or installed without you choosing it**:
+the notice offers Download, Release page, Skip this version and Remind me later, and closing it
+means later.
+
+**Jarvis ▸ Updates ▸ Check for Updates...** does the same on demand and, unlike the automatic
+check, also says when you are already up to date. **Check Automatically** turns the startup check
+off, as does **Tools ▸ Options ▸ Jarvis ▸ Updates**; the tick box on the notice is the same
+setting, so it can be switched off from the thing interrupting you.
+
+The check is anonymous, sends nothing about you or your servers, runs off the UI thread so it can
+never delay SSMS starting, and is silent when there is no news — no network, a refusing proxy or
+a rate limit all pass without a word. Installing an update needs SSMS closed, because
+VSIXInstaller will not run while it is open, and the notice says so rather than starting
+something that fails afterwards.
 
 ## The part that matters: it cannot break your script
 
