@@ -83,11 +83,55 @@ foreach ($target in $targets) {
 # The package
 # ---------------------------------------------------------------------------------------
 
+<#
+.SYNOPSIS
+    The newest .vsix under a releases\<version>\ folder, or nothing.
+.DESCRIPTION
+    How the public release repository is laid out: every version kept in its own folder so the
+    older ones stay downloadable. Ordered by version rather than by name or write time, because
+    a fresh clone gives every file the same timestamp and 2026.903.1.10 sorts before .1.2 as
+    text.
+#>
+function Find-NewestReleasedVsix {
+    param([string]$Folder)
+
+    $releases = Join-Path $Folder 'releases'
+    if (-not (Test-Path $releases)) { return $null }
+
+    $best = $null
+    $bestVersion = $null
+
+    foreach ($directory in Get-ChildItem $releases -Directory) {
+        $vsix = Get-ChildItem $directory.FullName -Filter '*.vsix' -File |
+            Select-Object -First 1
+
+        if (-not $vsix) { continue }
+
+        $parsed = $null
+        [void][version]::TryParse($directory.Name, [ref]$parsed)
+
+        if ($null -eq $bestVersion -or
+            ($parsed -and $bestVersion -and $parsed -gt $bestVersion) -or
+            ($parsed -and -not $bestVersion)) {
+            $best = $vsix.FullName
+            $bestVersion = $parsed
+        }
+    }
+
+    return $best
+}
+
 if (-not $VsixPath) {
-    # Beside the script first, which is how a published release is laid out: the .vsix and
-    # these scripts in one folder, no source tree anywhere.
+    # Beside the script first, which is how a release folder is laid out: the .vsix and
+    # these scripts together, no source tree anywhere.
     $VsixPath = Get-ChildItem $PSScriptRoot -Filter '*.vsix' -File -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+
+    # Then releases\<version>\, which is how the public repository is laid out: one folder per
+    # version so the older ones stay downloadable. The newest wins.
+    if (-not $VsixPath) {
+        $VsixPath = Find-NewestReleasedVsix -Folder $PSScriptRoot
+    }
 
     if (-not $VsixPath) {
         $VsixPath = Join-Path $root 'artifacts\Jarvis.SqlFormatter.vsix'
@@ -99,8 +143,8 @@ if (-not $VsixPath) {
 }
 
 if (-not (Test-Path $VsixPath)) {
-    throw ("No .vsix found. Put one beside this script, run .\build\build.ps1, " +
-           "or pass -VsixPath.")
+    throw ("No .vsix found. Put one beside this script or under releases\<version>\, " +
+           "run .\build\build.ps1, or pass -VsixPath.")
 }
 
 if ($DryRun) {

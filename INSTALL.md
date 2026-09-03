@@ -1,4 +1,4 @@
-# Jarvis SQL Formatter 2026.903.1.5
+# Jarvis SQL Formatter 2026.903.1.9
 
 A T-SQL formatter and IntelliSense for SQL Server Management Studio 21 and 22.
 
@@ -29,8 +29,8 @@ answers in advance. Verify it afterwards with:
 
 | file | what it is |
 |---|---|
-| Jarvis.SqlFormatter-2026.903.1.5.vsix | the extension |
-| jsqlfmt-2026.903.1.5.zip | the command line formatter, for hooks and CI |
+| Jarvis.SqlFormatter-2026.903.1.9.vsix | the extension |
+| jsqlfmt-2026.903.1.9.zip | the command line formatter, for hooks and CI |
 | install.ps1, uninstall.ps1, update.ps1 | what you run |
 | check-registration.ps1, doctor.ps1 | for when something does not work |
 | README.md | the full documentation |

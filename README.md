@@ -1,6 +1,6 @@
-# Jarvis for SSMS
+# Jarvis SSMS Extension
 
-A T-SQL toolkit for **SQL Server Management Studio 21 and 22**, built as a proper VSIX extension
+A T-SQL toolkit for **SQL Server Management Studio (SSMS) 21 and 22**, built as a proper VSIX extension
 for the Visual Studio shell that SSMS now runs on.
 
 It started as a formatter and is no longer only that. Under one **Jarvis** menu:
@@ -16,20 +16,54 @@ It started as a formatter and is no longer only that. Under one **Jarvis** menu:
 
 Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x64).
 
-## Download
+## Download and install
 
-**Latest release: 2026.903.1.5**
+**Latest release: 2026.903.1.9**
 
-[`Jarvis.SqlFormatter-2026.903.1.5.vsix`](releases/2026.903.1.5/Jarvis.SqlFormatter-2026.903.1.5.vsix)
+Get the files, either way:
 
-Close SSMS, then from a copy of this repository:
+```powershell
+git clone https://github.com/EhsanRezaei1981/SSMS-Extensions-Release.git
+cd SSMS-Extensions-Release
+```
+
+or press **Code ▸ Download ZIP** on this page and extract it somewhere.
+
+Then **close SSMS** and run, from that folder:
 
 ```powershell
 .\install.ps1
 ```
 
-`.\install.ps1 -DryRun` prints the resolved paths and changes nothing. Every release is kept
-under [`releases/`](releases), each with its own `SHA256SUMS.txt`.
+That is the whole install. It finds SSMS on its own, picks the newest package under
+[`releases/`](releases), and hands it to the `VSIXInstaller.exe` inside SSMS. Start SSMS and
+the **Jarvis** menu is on the menu bar.
+
+`.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
+first.
+
+### Updating
+
+The same script. Pull the new version and run it again — there is no need to uninstall first:
+
+```powershell
+git pull
+.\install.ps1
+```
+
+Downloaded the ZIP instead? Download the new one, extract it, and run `.\install.ps1` from
+there. SSMS must be closed either way.
+
+### If something looks wrong
+
+```powershell
+.\doctor.ps1        # what is installed, where, and whether it registered
+.\uninstall.ps1     # remove it; -Force skips the prompt
+```
+
+Every release stays under [`releases/`](releases) with its own `SHA256SUMS.txt`, so an older
+one can be installed with `.\install.ps1 -VsixPath releases\<version>\<file>.vsix`.
+What changed in each is in [CHANGELOG.md](CHANGELOG.md).
 
 The source for all of this lives in [https://github.com/EhsanRezaei1981/SSMS-Extensions](https://github.com/EhsanRezaei1981/SSMS-Extensions).
 
@@ -618,7 +652,7 @@ To remove it:
 .\uninstall.ps1 -DryRun    # list what would be removed, change nothing
 ```
 
-### Style profiles
+## Style profiles
 
 Pick one from **Jarvis ▸ Active Style**.
 
@@ -708,6 +742,16 @@ jsqlfmt --style Compact -r db    # use a named profile
 Exit codes: `0` success, `1` changes pending under `--check`, `2` bad usage, `3` a file could not
 be formatted safely.
 
+## Licence
+
+Free to use, for anything, including at work. Install it on as many machines as you like and
+pass it to whoever you like, provided the copy is complete, unmodified and keeps its notice.
+
+Not free to sell: it may not be sold, charged for, or included in anything sold or offered as a
+paid product or service, and it may not be passed off as somebody else's work. All other rights
+are reserved.
+
+It comes with no warranty of any kind. The full terms are in [LICENSE.txt](LICENSE.txt).
 ## Known limits
 
 - Casing is decided from word lists plus context, not from a full parse. Words that are far more
