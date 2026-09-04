@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.904.1.1**
+**Latest release: 2026.904.1.2**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.904.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.1/Jarvis.SSMSExtension-2026.904.1.1.zip).
+2026.904.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.2/Jarvis.SSMSExtension-2026.904.1.2.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.1/Jarvis.SSMSExtension-2026.904.1.1.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.2.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.2/Jarvis.SSMSExtension-2026.904.1.2.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -204,6 +204,21 @@ It is **on from a fresh install**, so Jarvis works the way it is meant to withou
 That does switch SSMS's own IntelliSense off — only one list should ever appear — and the two
 courtesies above are why that is safe to undo: turn Jarvis IntelliSense off and SSMS's comes
 back exactly as you had it.
+
+### What you picked last comes up first
+
+The list remembers what you choose from it and floats those to the top next time, because
+writing SQL against a database you know means reaching for the same handful of tables over and
+over.
+
+It promotes **within a group, never across one**. The groups already mean something — a column
+of a table in the current `FROM` sits above a table from elsewhere — and a recently used table
+jumping over the columns you are in the middle of listing would be worse than no ordering at
+all. Everything not recently picked stays exactly where the filter put it.
+
+The last 30 picks are kept, for the session. Entries from another database are harmless: the
+ordering only rearranges rows the list already produced, so a name that is not there cannot
+surface.
 
 ### Hover to see what something is
 

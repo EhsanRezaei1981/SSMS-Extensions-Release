@@ -11,6 +11,13 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Added**
 
+- **What you picked last comes up first in the completion list.** The last 30 choices are
+  remembered and floated to the top, because working against a database you know means reaching
+  for the same few tables repeatedly. It promotes **within a group, never across one** — a
+  recently used table must not jump above the columns of the table you are listing right now —
+  and everything else keeps exactly the order the filter gave it. Shared across query windows,
+  since the tables somebody is working on are the same across their open tabs.
+
 - **Hover a name to see what it holds, in a grid you can copy from.** Resting the mouse on a
   table or view shows its columns in a real table — number, name, type, nullability and whether
   it is an identity, computed or defaulted — the facts that decide how an `INSERT` has to be
