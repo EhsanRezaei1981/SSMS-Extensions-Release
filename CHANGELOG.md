@@ -11,6 +11,20 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Added**
 
+- **Hover a name to see what it holds, in a grid you can copy from.** Resting the mouse on a
+  table or view shows its columns in a real table — number, name, type, nullability and whether
+  it is an identity, computed or defaulted — the facts that decide how an `INSERT` has to be
+  written. A procedure or function shows its parameters, with a direction column marking
+  `OUTPUT`.
+  **It is a panel rather than a tooltip**: it stays open when you move onto it, rows can be
+  selected with click, Ctrl+click and Shift+click, and **Ctrl+C** takes them. **Copy names**
+  gives a comma separated column list for a `SELECT`; **Copy rows** gives the grid tab separated,
+  so it arrives in a spreadsheet as columns. With nothing selected both copy everything. Escape,
+  a click elsewhere or typing closes it.
+  It reads the catalogue Jarvis already holds and **never asks the server** — hovering cannot set
+  a query going, so a database that has not been read yet simply shows nothing. Off under
+  **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Describe a name when I hover on it**.
+
 - **Every result set is mapped, not only the one in focus.** A batch that returns several sets
   stacks a grid for each; all of them are now read, and their layers are labelled
   `Result 2 · VectorData` so two sets carrying a column of the same name do not appear as two

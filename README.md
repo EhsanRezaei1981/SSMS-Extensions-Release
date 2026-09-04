@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.903.1.16**
+**Latest release: 2026.904.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.903.1.16 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.16/Jarvis.SSMSExtension-2026.903.1.16.zip).
+2026.904.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.1/Jarvis.SSMSExtension-2026.904.1.1.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.903.1.16.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.903.1.16/Jarvis.SSMSExtension-2026.903.1.16.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.1/Jarvis.SSMSExtension-2026.904.1.1.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -204,6 +204,44 @@ It is **on from a fresh install**, so Jarvis works the way it is meant to withou
 That does switch SSMS's own IntelliSense off — only one list should ever appear — and the two
 courtesies above are why that is safe to undo: turn Jarvis IntelliSense off and SSMS's comes
 back exactly as you had it.
+
+### Hover to see what something is
+
+Rest the mouse on a name and Jarvis shows what it holds, in a grid you can select from:
+
+```
+ SELECT * FROM TMgr.Tb_JobRequest
+        ┌──────────────────────────────────────────────────────────────┐
+        │ TMgr.Tb_JobRequest  —  table                                 │
+        │ 14 columns  -  select rows, then Ctrl+C                      │
+        ├───┬───────────────┬───────────────┬──────────┬───────────────┤
+        │ # │ Column        │ Type          │ Null     │ Notes         │
+        ├───┼───────────────┼───────────────┼──────────┼───────────────┤
+        │ 1 │ JobRequestId  │ int           │ not null │ identity      │
+        │ 2 │ StreetId      │ int           │ not null │               │
+        │ 3 │ Description   │ nvarchar(200) │ null     │               │
+        │ 4 │ Created       │ datetime      │ not null │ default       │
+        ├───┴───────────────┴───────────────┴──────────┴───────────────┤
+        │ [ Copy names ] [ Copy rows ]                                 │
+        └──────────────────────────────────────────────────────────────┘
+```
+
+A **table or view** shows its columns with their types, what may be null, and what is an
+identity, computed or defaulted — the things that decide how an `INSERT` has to be written. A
+**procedure or function** shows its parameters instead, with a **Direction** column marking
+`OUTPUT`, and optional ones noted.
+
+**It is a panel, not a tooltip.** It stays open when you move onto it, so you can select rows —
+click, Ctrl+click, Shift+click — and take them with **Ctrl+C**. **Copy names** gives a comma
+separated column list to paste into a `SELECT`; **Copy rows** gives the whole grid tab separated,
+so it lands in a spreadsheet as columns. With nothing selected, both copy everything. Escape
+closes it, as does clicking elsewhere or typing.
+
+It reads the catalogue Jarvis already holds, so it never asks the server and never delays
+anything: hovering a name in a database that has not been read yet simply shows nothing rather
+than starting a query.
+
+Turn it off under **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Describe a name when I hover on it**.
 
 ### The list
 
