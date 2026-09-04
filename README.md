@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.904.1.2**
+**Latest release: 2026.904.1.3**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.904.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.2/Jarvis.SSMSExtension-2026.904.1.2.zip).
+2026.904.1.3 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.3/Jarvis.SSMSExtension-2026.904.1.3.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.2.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.2/Jarvis.SSMSExtension-2026.904.1.2.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.3.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.3/Jarvis.SSMSExtension-2026.904.1.3.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -204,6 +204,25 @@ It is **on from a fresh install**, so Jarvis works the way it is meant to withou
 That does switch SSMS's own IntelliSense off — only one list should ever appear — and the two
 courtesies above are why that is safe to undo: turn Jarvis IntelliSense off and SSMS's comes
 back exactly as you had it.
+
+### The star tells you it can expand
+
+Put the caret after a `*` and Jarvis says so, with the number of columns it would write:
+
+```
+ SELECT * │ Tab to expand 14 columns
+ FROM TMgr.Tb_JobRequest
+```
+
+The note appears **only where it is true**. It asks the expander whether this particular star
+would expand, rather than guessing from the character, so it never appears on a multiplication,
+on a star outside a `SELECT` list, or on a table Jarvis has not read — and never promises
+something Tab will not do. It goes as soon as the caret moves, takes no focus and swallows no
+keys: Tab expands exactly as it always did.
+
+Turn it off under **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Show the Tab hint beside a ***.
+It also stays away when **Expand \* to columns on Tab** is off, rather than advertising a Tab
+that would only indent.
 
 ### What you picked last comes up first
 

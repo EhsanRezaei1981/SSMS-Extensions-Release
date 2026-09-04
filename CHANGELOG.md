@@ -9,7 +9,27 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ## Unreleased
 
+**Fixed**
+
+- **A SELECT following another SELECT now gets its semicolon.** Two queries in a row — the
+  everyday shape of an ad hoc script — left the first unterminated, because a `SELECT` was not
+  treated as ending the statement before it. It could not simply be added to the list of
+  keywords that start a statement: `INSERT INTO t SELECT`, `CREATE VIEW AS SELECT`,
+  `UNION SELECT` and a subquery are all continuations, and terminating those would break the
+  SQL. A `SELECT` now ends the previous statement only when that statement was itself a
+  `SELECT` and it is not joined on by `UNION`, `EXCEPT`, `INTERSECT`, `AS`, a bracket, a comma
+  or an operator.
+
 **Added**
+
+- **The star says it can be expanded.** With the caret after a `*`, a small note appears beside
+  it — "Tab to expand 14 columns" — because the feature was there and invisible: nothing in the
+  editor suggested Tab would do anything, so only somebody who already knew ever used it. It
+  appears **only where it is true**, asking the expander about that particular star rather than
+  guessing from the character, so it never shows on a multiplication, outside a `SELECT` list,
+  or on a table that has not been read. It takes no focus and handles no keys — Tab works
+  exactly as before — and it stays away entirely when **Expand \* to columns on Tab** is off.
+  Its own switch is **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Show the Tab hint beside a ***.
 
 - **What you picked last comes up first in the completion list.** The last 30 choices are
   remembered and floated to the top, because working against a database you know means reaching
