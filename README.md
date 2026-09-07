@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.904.1.3**
+**Latest release: 2026.907.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.904.1.3 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.3/Jarvis.SSMSExtension-2026.904.1.3.zip).
+2026.907.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.907.1.1/Jarvis.SSMSExtension-2026.907.1.1.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.904.1.3.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.904.1.3/Jarvis.SSMSExtension-2026.904.1.3.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.907.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.907.1.1/Jarvis.SSMSExtension-2026.907.1.1.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -98,7 +98,7 @@ Jarvis
 ├── Results ▸
 │     ├── Export Results to Excel...
 │     ├── Export Results to CSV (pipe delimited)...
-│     └── Show on Map...
+│     └── Show on Map...            Ctrl+K, Ctrl+M
 ├── Snippets ▸
 │     ├── Expand on Tab             on/off
 │     ├── Edit Snippets...
@@ -655,9 +655,13 @@ queue is pumped as it goes, so the window stays live throughout.
 
 ## Geometry on a map
 
-**Jarvis ▸ Results ▸ Show on Map...** draws the spatial columns of the results grid on a real
-map — points, lines and polygons, and the multi and collection forms of each. It reads the grid
-you are already looking at, so nothing is queried twice, and a selection maps just that selection.
+**Jarvis ▸ Results ▸ Show on Map...**, or **Ctrl+K, Ctrl+M**, draws the spatial columns of the
+results grid on a real map — points, lines and polygons, and the multi and collection forms of
+each. It reads the grid you are already looking at, so nothing is queried twice, and a selection
+maps just that selection.
+
+The shortcut works with the focus in the results grid as well as in the editor, which is where
+you will usually be when you want it.
 
 ```
 ┌─ Layers ─────────────┬──────────────────────────────┐
@@ -677,6 +681,17 @@ you are already looking at, so nothing is queried twice, and a selection maps ju
 
 Every geometry column becomes its own layer, with a tick to switch it off, its shape count and
 SRID, and **Zoom to fit**. Clicking a shape shows the rest of its row.
+
+**Each record has its own tick too.** Open **Records** under a layer and every shape is listed
+with its number, its colour and the first thing in its row that identifies it — switch any one
+off without disturbing the rest, or use **All on** / **All off** for the lot. What you switch
+off stays off through a **Swap lat/long** or a change of map provider, rather than quietly
+coming back.
+
+The list is built when you first open it, so a layer of a thousand shapes costs nothing until
+you want to pick through it, and it lists the first 500 — past that the ticks stop being
+something anybody scrolls through. Records beyond the limit stay on the map; they simply have no
+tick of their own, and the pane says so.
 
 **Every record is drawn in its own colour**, so shapes that touch or overlap stay apart. The
 colour comes from the row number rather than a list, stepping the hue far enough each time that

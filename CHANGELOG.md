@@ -11,6 +11,13 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Fixed**
 
+- **The map opens on the screen SSMS is on.** It was appearing on the primary monitor regardless.
+  The map runs on its own thread, so it has a Win32 owner but no WPF `Owner`, and
+  `CenterOwner` with nothing to centre on falls back to the primary screen. It is now centred
+  over the SSMS window in physical pixels — two monitors can be at different DPI, and the
+  arithmetic that is right on one is wrong on the other — and clamped to that monitor's work
+  area, so it cannot land off screen or under the taskbar.
+
 - **A SELECT following another SELECT now gets its semicolon.** Two queries in a row — the
   everyday shape of an ad hoc script — left the first unterminated, because a `SELECT` was not
   treated as ending the statement before it. It could not simply be added to the list of
@@ -21,6 +28,23 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   or an operator.
 
 **Added**
+
+- **Ctrl+K, Ctrl+M** opens the map. Global scope rather than editor scope, unlike the other
+  Ctrl+K bindings: the map is about the results grid, so the key has to work with the focus in
+  the grid and not only in the editor.
+
+- **Every record on the map can be switched on and off.** **Records** under each layer lists its
+  shapes with their number, their colour and the first identifying value from their row; any one
+  can be hidden without disturbing the rest, and **All on** / **All off** does the lot. What is
+  switched off **stays** off through a swap of lat/long or a change of map provider, instead of
+  quietly reappearing when the layer is rebuilt.
+  The list is built when first opened, so a large layer costs nothing until it is wanted, and it
+  lists the first 500 — beyond that the ticks are no longer something anybody scrolls. Records
+  past the limit stay on the map and the pane says so, rather than appearing to have been lost.
+
+- **About carries a link to the releases page**, the same address Check for Updates asks, so the
+  two can never disagree about where downloads live. It opens in the browser; a URL somebody has
+  to retype is a URL nobody follows.
 
 - **The star says it can be expanded.** With the caret after a `*`, a small note appears beside
   it — "Tab to expand 14 columns" — because the feature was there and invisible: nothing in the
