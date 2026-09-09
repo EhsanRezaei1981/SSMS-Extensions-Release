@@ -21,34 +21,39 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.909.1.4**
+**Latest release: 2026.909.1.5**
 
-### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
+### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
+
+**Close SSMS, double click the file, start SSMS.** The **Jarvis** menu is on the menu bar. That
+is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.909.1.4 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.4/Jarvis.SSMSExtension-2026.909.1.4.zip).
+2026.909.1.5 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.5/Jarvis.SSMSExtension-2026.909.1.5.vsix).
 
-It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
-the extracted folder:
+SSMS has to be closed: a running instance holds the extension registry open and the install
+fails with nothing installed.
 
-```powershell
-.\install.ps1
-```
+### If you would rather use a script
 
-That is the whole install. It finds SSMS on its own and hands the package to the
-`VSIXInstaller.exe` inside SSMS. Start SSMS and the **Jarvis** menu is on the menu bar.
+Every release also carries a
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.5/Jarvis.SSMSExtension-2026.909.1.5.zip).
+Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
-`.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
-first.
+It does more than double clicking does: it checks SSMS is closed and says which process is
+holding it, removes an older copy first, and verifies the package actually registered rather than
+assuming it did. `.\install.ps1 -DryRun` shows the resolved paths and changes nothing.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.909.1.4.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.4/Jarvis.SSMSExtension-2026.909.1.4.vsix) — double click it
-and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
-remove an older copy, and verify the package actually registered rather than assuming it did.
+Worth having when an install has already gone wrong, or for putting Jarvis on several machines
+without clicking through anything.
 
 ### Updating
 
-Download the new release, extract it, and run `.\install.ps1` from there. There is no need to
-uninstall first, and SSMS must be closed either way.
+Download the new `.vsix` and double click it, or run `.\install.ps1` from the new zip. There
+is no need to uninstall first, and SSMS must be closed either way.
+
+Jarvis also checks for updates itself and tells you when there is a newer version — nothing is
+downloaded or installed without you saying so.
 
 ### If something looks wrong
 
@@ -77,8 +82,8 @@ Jarvis
 ├── SQL Formatter ▸
 │     ├── Format Document           Ctrl+K, Ctrl+D   (Ctrl+K, Ctrl+Y also works)
 │     ├── Format Selection          Ctrl+K, Ctrl+F
-│     ├── Copy as Formatted
-│     ├── Format All Open Documents
+│     ├── Copy as Formatted         Ctrl+K, Ctrl+G
+│     ├── Format All Open Documents Ctrl+K, Ctrl+A
 │     └── Format on Save             off by default
 ├── Active Style ▸
 │     ├── Jarvis Standard
@@ -95,21 +100,21 @@ Jarvis
 │     ├── Go To Definition           F12
 │     └── Refresh Metadata          Ctrl+K, Ctrl+R
 ├── History ▸
-│     ├── Query History...
+│     ├── Query History...          Ctrl+K, Ctrl+Q
 │     └── Clear Query History...
 ├── Results ▸
-│     ├── Export Results to Excel...
-│     ├── Export Results to CSV (pipe delimited)...
+│     ├── Export Results to Excel...            Ctrl+K, Ctrl+E
+│     ├── Export Results to CSV (pipe delimited)...  Ctrl+K, Ctrl+V
 │     └── Show on Map...            Ctrl+K, Ctrl+M
 ├── Snippets ▸
 │     ├── Expand on Tab             on/off
-│     ├── Edit Snippets...
+│     ├── Edit Snippets...          Ctrl+K, Ctrl+T
 │     ├── Reload Snippets
 │     └── List Snippets             Ctrl+K, Ctrl+L
 ├── Updates ▸
 │     ├── Check for Updates...
 │     └── Check Automatically        on by default
-├── Options...
+├── Options...                      Ctrl+K, Ctrl+O
 ├── Licence...
 ├── About Jarvis...
 └── Uninstall Jarvis...
@@ -117,6 +122,25 @@ Jarvis
 
 The same commands are on the **editor right click menu** under a Jarvis sub menu, and on a
 dockable **Jarvis** toolbar. Settings are in **Tools ▸ Options ▸ Jarvis**.
+
+Every shortcut is a **Ctrl+K** chord, because that is where the first ones went and a second
+prefix is one more thing to remember. The letters miss the standard editor chords rather than
+being perfectly mnemonic — `Ctrl+K, Ctrl+C` is comment selection, `Ctrl+K, Ctrl+U` uncomment,
+and `Ctrl+K` with **K**, **N**, **P**, **W** or **H** belongs to bookmarks and the task list.
+Taking one of those would break a key you use all day to gain one you use occasionally.
+
+**They are assigned rather than only declared.** A key in a `.vsct` is a *default*, and the shell
+applies defaults while it builds its keyboard map — so on a machine that has already run SSMS,
+shortcuts added by a newer version are ignored in silence: the command sits in **Tools ▸ Options ▸
+Environment ▸ Keyboard** with nothing beside it. Jarvis assigns them itself on the first start of
+each version, and writes what it set to the output pane. **A command that already has a shortcut
+is left alone**, so one you chose yourself is never overwritten, and one you deliberately removed
+stays removed.
+
+Five things have **no** shortcut on purpose: the six style profiles and the four toggles, which
+you set once rather than invoke; About, Licence and Check for Updates, which nobody reaches for
+in a hurry; and **Clear Query History** and **Uninstall Jarvis**, because a keystroke should not
+be able to throw away your history or remove the extension. All of them are in the menu.
 
 ## Snippets
 
@@ -131,8 +155,14 @@ Type a shortcut and press **Tab**:
 | `tc` ⇥ | TRY/CATCH wrapped around a transaction, with the rollback and THROW written for you |
 | `sp` ⇥ | a CREATE PROCEDURE with a dated, attributed header |
 
-Around 25 ship by default. When the word in front of the caret is not a shortcut, Tab does
-exactly what it always did, so indenting and IntelliSense are unaffected.
+**22** ship by default. When the word in front of the caret is not a shortcut, Tab does exactly
+what it always did, so indenting and IntelliSense are unaffected.
+
+**Jarvis ▸ Snippets ▸ List Snippets** (`Ctrl+K, Ctrl+T` edits the file, `Ctrl+K, Ctrl+L` lists
+it) writes every shortcut with its description to the **Jarvis output pane**, along with the file
+they came from and how many there are — the answer to "what can I type?" without opening the
+file. It brings the Output window forward, which it did not always do: it selected the Jarvis
+pane inside a window that was closed, so the command appeared to do nothing.
 
 ### They are yours to change
 
@@ -217,6 +247,11 @@ Put the caret after a `*` and Jarvis says so, with the number of columns it woul
  SELECT * │ Tab to expand 14 columns
  FROM TMgr.Tb_JobRequest
 ```
+
+Everything T-SQL allows between `SELECT` and the list is understood, so `SELECT TOP 100 *`,
+`SELECT DISTINCT *`, `SELECT TOP (@n) PERCENT *` and `SELECT TOP 10 WITH TIES *` all expand — as
+does a qualified `o.*` after any of them. A number is only taken as part of `TOP`, so
+`SELECT 100 * 2` stays the multiplication it is.
 
 The note appears **only where it is true**. It asks the expander whether this particular star
 would expand, rather than guessing from the character, so it never appears on a multiplication,
@@ -582,8 +617,32 @@ Jarvis: Export to Excel (.xlsx)
 Jarvis: Export to CSV (pipe delimited)
 ```
 
-Both are also on **Jarvis ▸ Results**, which acts on whichever grid you are looking at. Both
-write the **column names as the first row**.
+Both are also on **Jarvis ▸ Results**. Both write the **column names as the first row**.
+
+### Every result set, not just the one you clicked
+
+A batch that returns several result sets exports **all** of them, in the order SSMS shows them —
+it used to export whichever grid was focused and leave the rest behind without saying so.
+
+| | |
+|---|---|
+| **Excel** | one workbook, **one worksheet per result set** — `Result 1`, `Result 2`, … |
+| **CSV** | **one file per result set** — `report-1.csv`, `report-2.csv`, … |
+
+The formats differ because the formats differ: a workbook holds sheets, so three result sets
+belong in three sheets of one file; a CSV file holds exactly one table, so three result sets can
+only be three files.
+
+Two details worth knowing. Excel's ceiling of 1,048,575 data rows still applies, so a set past it
+continues on `Result 2 (2)` and so on. And a **size** limit is not applied to a multi-sheet
+workbook — splitting it by bytes would scatter the sheets across files, which is the arrangement
+one workbook exists to replace; with a single result set the size splitting works exactly as it
+always did. CSV honours the limit either way, so a large set 2 becomes `report-2.csv`,
+`report-2 (2).csv` and so on.
+
+A set that cannot be read is skipped rather than failing the export — three good result sets
+should not be lost to a fourth that turned out to be something else — and the count of what was
+written is reported when it finishes.
 
 **Excel** produces a real `.xlsx` — an OOXML workbook, not a CSV wearing the wrong extension, so
 Excel opens it without complaining that the format does not match. The header row is bold and

@@ -58,12 +58,15 @@ and drawing a guess would put something on the map the database never said.
 
 ## Install
 
-Download the `.vsix` from the [latest release][latest] and double-click it, or run
-`install.ps1` from the same release for an unattended install. Close SSMS first — a running
-instance blocks the installer.
+**[Download the `.vsix`][vsix]**, close SSMS, double-click it, start SSMS. That is the whole
+install — a running instance blocks the installer, so closing SSMS first is the one thing that
+matters.
+
+Every release also carries a zip of the extension with install scripts, for an unattended install
+or for putting it on several machines.
 
 Everything is documented in the [README][readme], and every change in the [changelog][changelog].
 
-[latest]: https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest
+[vsix]: https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix
 [readme]: https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/blob/main/README.md
 [changelog]: https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/blob/main/CHANGELOG.md

@@ -16,6 +16,77 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **List Snippets shows its answer.** It wrote the snippet list to the Jarvis output pane and
+  selected that pane — but selecting a pane inside a window that is closed leaves it closed, and
+  in SSMS the Output window usually is. So the command wrote a perfectly good list into somewhere
+  invisible and looked broken. The Output window is now brought forward, which fixes every other
+  message that relied on the same call, including a refused format explaining why it was refused.
+- **The shortcuts are assigned, not just declared.** Declaring a key in the `.vsct` only sets a
+  *default*, and the shell applies defaults while it is building a keyboard map. On any machine
+  that has already run SSMS the map exists — so a shortcut added by a newer version of an
+  extension is ignored, in silence: the command appears in **Tools ▸ Options ▸ Environment ▸
+  Keyboard** with nothing beside it and the key does nothing.
+  The sign of it was in the command names. The keyboard list shows `Jarvis.CopyasFormatted`,
+  derived from the button text, where the `.vsct` declares `Jarvis.CopyAsFormatted` — so what the
+  keyboard map knows about these commands never came from the `.vsct` at all.
+  Jarvis now assigns them through DTE on the first start of each version, looked up by command
+  set and id rather than by whatever name the shell derived. **A command that already has any
+  shortcut is left alone**, so one you chose yourself is never overwritten, and the pass runs
+  once per version rather than every start, so one you deliberately removed stays removed. What
+  it set is written to the output pane.
+- **Shortcuts for the rest of the menu**: `Ctrl+K, Ctrl+E` export to Excel, `Ctrl+K, Ctrl+V`
+  export to CSV, `Ctrl+K, Ctrl+Q` query history, `Ctrl+K, Ctrl+A` format every open document,
+  `Ctrl+K, Ctrl+G` copy as formatted, `Ctrl+K, Ctrl+T` edit the snippet file, `Ctrl+K, Ctrl+O`
+  options. All in the Ctrl+K family, with letters chosen to miss the standard editor chords —
+  `Ctrl+K, Ctrl+C` and `Ctrl+K, Ctrl+U` are comment and uncomment, and K, N, P, W and H belong to
+  bookmarks and the task list; taking one of those breaks a key somebody uses all day.
+  The style profiles, the toggles, About, Licence and Check for Updates are left unbound because
+  they are set or read once rather than invoked, and **Clear Query History** and **Uninstall** are
+  left unbound on purpose: a keystroke should not be able to throw away a history or remove the
+  extension. The About box also lists the map shortcut now, which it had never mentioned.
+- **The download is the `.vsix`, not the zip.** The big download link gave you
+  `Jarvis.SSMSExtension-latest.zip` — the extension plus the install scripts — so the shortest
+  path to a working install was extract, read, run PowerShell. It now hands over the extension
+  itself: close SSMS, double click, start SSMS. Releases carry a fixed
+  `Jarvis.SSMSExtension-latest.vsix` alongside the versioned one, because GitHub's permanent
+  `releases/latest/download/<asset>` link only resolves when the file is named the same in every
+  release.
+  **Check for Updates offers the `.vsix` too.** It preferred the zip bundle, which made the
+  answer to a one-click "there is an update" notice a zip to extract and a script to run. The
+  scripts are still published and still documented — they check SSMS is closed and name the
+  process holding it, remove an older copy, and verify the package actually registered — just as
+  the second option rather than the first.
+- **`SELECT TOP 100 *` expands on Tab again.** Only the single token before the star was
+  examined, so TOP's row count hid the SELECT behind it and the star was read as multiplication.
+  It now walks back through exactly what the grammar allows — `SELECT [ALL | DISTINCT]
+  [TOP expr [PERCENT] [WITH TIES]]` — so `DISTINCT`, `TOP (100)`, `TOP (@n)`, `PERCENT` and
+  `WITH TIES` all expand too, and a qualified `o.*` after TOP with them.
+  Being strict is the point: a number is accepted only as TOP's own argument, because a rule
+  that merely looked for SELECT somewhere behind the star would rewrite `SELECT 100 * 2` into a
+  column list. Fixing `WITH TIES` also needed the context analyser, which treated that `WITH`
+  as the start of a CTE and so cut the statement in half — the caret then appeared to be in no
+  clause at all.
+- **The export dialog says how many files or sheets you are about to get**, before the export
+  runs rather than after: one worksheet per result set for a workbook, one file per result set
+  for CSV, with the split applying to each set separately. With several sets it says "at least",
+  because the sizes are measured together and how a limit falls inside any one set is not known
+  from there — an honest floor beats a precise number that turns out wrong.
+- **Every result set is exported: a sheet each in Excel, a file each in CSV.** A batch returning
+  several result sets used to export whichever grid was focused and leave the rest behind
+  without a word. Excel now writes one workbook with **one worksheet per result set**
+  (`Result 1`, `Result 2`, …) and CSV writes **one file per result set** (`report-1.csv`,
+  `report-2.csv`, …) — a workbook holds sheets, a CSV file holds exactly one table, so the two
+  formats can only answer this differently.
+  Excel's 1,048,575 row ceiling still applies and a set past it continues on `Result 2 (2)`. A
+  **size** limit is not applied to a multi-sheet workbook, since splitting by bytes would
+  scatter the sheets across files and defeat the point; with one result set the size splitting
+  is untouched. The dialog that asks how to split now measures **every** set rather than the
+  first, which was showing a quarter of the truth for a four set export. A set that cannot be
+  read is skipped rather than failing the whole export.
+  The workbook writer had to learn several sheets: content type overrides per worksheet, and
+  relationship ids that no longer collide — styles was a fixed `rId2`, which with two or more
+  sheets left Excel with two parts claiming one relationship. Nine tests cover the package
+  structure, since a malformed workbook shows up only as Excel offering to repair the file.
 - **The installation target range is `[17.0,)`, not `[21.0,)`.** The Marketplace refused the
   package: *"API version 21.0 is experimental, and not allowed in the Marketplace at this time."*
   The lower bound of an installation target is an **API** version, whatever else it may look
