@@ -1,3 +1,5 @@
+![Jarvis — T-SQL toolkit for SQL Server Management Studio](docs/logo/jarvis-wordmark.png)
+
 # Jarvis SSMS Extension
 
 A T-SQL toolkit for **SQL Server Management Studio (SSMS) 21 and 22**, built as a proper VSIX extension
@@ -19,12 +21,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.909.1.1**
+**Latest release: 2026.909.1.3**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.909.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.1/Jarvis.SSMSExtension-2026.909.1.1.zip).
+2026.909.1.3 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.3/Jarvis.SSMSExtension-2026.909.1.3.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +41,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.909.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.1/Jarvis.SSMSExtension-2026.909.1.1.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.909.1.3.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.3/Jarvis.SSMSExtension-2026.909.1.3.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -141,7 +143,9 @@ It lives in `%APPDATA%\Jarvis\snippets.txt` unless you say otherwise in
 **Tools ▸ Options ▸ Jarvis ▸ General ▸ Snippet file**, which has a **...** button to pick one — point it at a shared folder so a team
 works from one set, or at a repository so they are under source control. A missing folder is
 created and a new file is started with the built-in snippets; a path that cannot be written to
-falls back to the default. Underneath it, **Snippet file in use** shows what actually resolved.
+falls back to the default **and says so** — in the Jarvis output pane and in the About box, naming
+the path it could not use. One setting, one file, and the file it is really reading is under
+**Jarvis ▸ About ▸ Files**.
 
 ```
 [hdr] Comment header block
@@ -784,11 +788,12 @@ column is a word, not a shape, and is left alone.
 
 ### Which map
 
-Seven to choose from, switchable on the window itself:
+Eight to choose from, switchable on the window itself:
 
 | provider | key | notes |
 |---|---|---|
 | **TomTom** | yes | the default |
+| **TomTom satellite** | same key | imagery on the default provider's key, so satellite costs no extra setting up |
 | **Google Maps** | yes | drawn through its own API — its terms do not allow its tiles in another library |
 | **OpenStreetMap** | **none** | always available, and what is offered when a key is missing |
 | **Azure Maps** | yes | road map, with its own address search |
@@ -797,12 +802,29 @@ Seven to choose from, switchable on the window itself:
 | **Stadia Maps** | yes | pale Alidade styling, good under coloured shapes |
 
 Keys go in **Tools ▸ Options ▸ Jarvis ▸ Map**, one per provider — Azure's two entries share the
-one Azure key. Without a key Jarvis says which one is missing and points at OpenStreetMap rather
-than showing an empty window.
+one Azure key.
+
+**With no key at all, the map draws OpenStreetMap.** It needs none, so a fresh install shows your
+geometry immediately without anybody visiting a developer portal first. The provider list moves
+to OpenStreetMap along with the map, so the box never names something other than what is on
+screen, and the status line says which key is missing every time it draws — not once at startup,
+because whoever opens the map an hour later has forgotten. Your chosen provider is left set in
+the options, so entering its key later is all it takes.
 
 Each keyed provider does its own address search and reverse geocoding, so the key you enter
 covers the map *and* the searching. Attribution is rendered on the map for every one, as their
 terms require.
+
+**Switching view without leaving the map.** The layers button at the **top right** of the map
+lists every background this machine can actually draw — road and satellite together — so going
+from streets to imagery is one click on the map rather than a trip through the provider list.
+Google is switched with its own **Map / Satellite** buttons, since Google is drawn by its own API
+rather than as tiles.
+
+A provider with no key is **left out of that list** rather than offered and then failing: a view
+that turns the map grey when picked is worse than one that was never there. The button itself is
+not shown when only one background is available — a switcher with nothing to switch to is
+furniture. So entering a second key is what makes the switcher appear.
 
 ### The address under a shape
 
@@ -1023,12 +1045,14 @@ if you want them gone.
 
 ## Style profiles
 
-Pick one from **Jarvis ▸ Active Style**.
+Pick one from **Jarvis ▸ Active Style**. **Jarvis Gold is the default** — it is the style this
+formatter was built to produce. Anything you have already chosen is left alone; the default only
+applies where nothing has been picked.
 
 | Profile | What it looks like |
 |---|---|
+| **Jarvis Gold** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
 | **Jarvis Standard** | 4 space indents, upper cased keywords, trailing commas, wrap at column 120 |
-| **Jarvis Gold** | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
 | **Jarvis Compact** | 2 space indents, wrap at 160, joins and predicates kept together |
 | **Jarvis River** | Every column on its own line with the comma in front |
 | **Jarvis Light** | Normalise whitespace and casing, change as few line breaks as possible |

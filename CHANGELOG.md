@@ -16,6 +16,46 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **One snippet setting, not two.** The options page had **Snippet file** and, below it, a
+  read-only **Snippet file in use** showing the resolved path — two rows for one file, when the
+  path is already in **Jarvis ▸ About ▸ Files**. Its real job was to reveal the case where the
+  path you asked for could not be written to and the default was used instead, and it did that
+  only by inviting you to notice the two rows disagreed. That fallback is now **stated in
+  words** — in the Jarvis output pane when it happens and in the About box, naming the path it
+  could not use, the way the query history has always reported the same thing. The store had
+  recorded the fact from the beginning and nothing ever read it; the comment beside it claimed
+  the About box mentioned it, and the About box did not.
+- **Jarvis Gold is the default style profile**, in place of Jarvis Standard. It is the column
+  aligned river style this formatter was built to produce, so it is what a fresh install should
+  do without anybody going to look for it. Set in all three places that decide the profile —
+  the General page, the fallback used before the options pages have loaded, and the About box —
+  because a format done early in a session coming out in a different style from one done a
+  minute later is the sort of thing nobody would think to report.
+  **A profile you have already chosen is untouched**; this only changes what happens where
+  nothing was picked. The command line tool is unaffected and still defaults to Standard, since
+  scripts depend on its output not changing under them: pass `--style "Jarvis Gold"` there.
+- **No API key now draws OpenStreetMap instead of a notice.** A provider chosen without its key
+  used to replace the map with a page explaining where to put one — so the first thing a new user
+  saw was a page about API keys, and their geometry went undrawn. OpenStreetMap needs no key, so
+  that is what it draws. The provider list moves with it, because a box naming TomTom over
+  OpenStreetMap tiles is its own kind of wrong, and the status line names the missing key on
+  every draw rather than once at startup. The chosen provider is left set in the options, so
+  entering a key later is all it takes. That page is gone.
+- **Marketplace staging**, `build\marketplace.ps1`: stages the package, the icon and a listing
+  overview, prints the form values, and uploads nothing. It reads the manifest out of the
+  package rather than off disk and refuses to stage one that targets Visual Studio, that does not
+  target SSMS, whose icon is not actually inside it, or whose metadata still names a company.
+- **The extension manager's "Getting started" and "Release notes" links** now go to the README
+  and the changelog in the release repository, and the tags include the spatial features —
+  geometry, geography, spatial, map and WKT were missing, so nobody searching for them found it.
+- **A logo.** A white J standing in a data platter, on a navy to teal badge. The old icon was a
+  "SQL FORMATTER" wordmark over before-and-after code lines, which named a product that no longer
+  exists — this is a toolkit now, not a formatter. Drawn from geometry at each size rather than
+  shrunk from one large image, because a 16 pixel icon made by downscaling a 256 pixel one is
+  mush; there is a 16 through 512 set, a preview for the extension manager, and a wide wordmark
+  for the README and a marketplace listing.
+- **"More info" points at the release repository** rather than a company site, which is where the
+  README, the changelog and the downloads actually are.
 - **A map that cannot open says so.** A failure while building the window was written to a debug
   trace, which goes nowhere in a released build — so the shortcut appeared to do nothing at all,
   while the output window went on reporting the shapes it had found. It now shows what went
@@ -136,8 +176,16 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   the panel has gone, and the panel is clipped while it moves so its contents do not spill over
   the map.
 
+- **Satellite imagery, switchable on the map.** The layers button at the top right of the map
+  lists every background there is a key for — road and satellite together — so going from streets
+  to imagery is one click rather than a trip through the provider list. Google keeps its own
+  Map/Satellite buttons, being drawn by its own API rather than as tiles. Providers with no key
+  are left out of the list instead of offered and then failing, and the button is not shown at
+  all when there is only one background, since a switcher with nothing to switch to is furniture.
+- **TomTom satellite** as an eighth entry, on the same key as TomTom's road map — the default
+  provider can now show imagery without a second account.
 - **Azure Maps, MapTiler and Stadia Maps** join TomTom, Google and OpenStreetMap, with **Azure
-  Maps satellite** as a seventh entry sharing the Azure key — imagery being what most spatial
+  Maps satellite** sharing the Azure key — imagery being what most spatial
   data wants behind it. Each brings its own address search and reverse geocoding, so one key
   covers the map and the searching, and each renders its required attribution.
   They all serve ordinary XYZ raster tiles, so they went through the existing Leaflet path with
