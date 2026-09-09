@@ -9,7 +9,32 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 ## Unreleased
 
+**Changed**
+
+- **The map always opens.** It used to refuse with a message box when there was no results grid,
+  no spatial column, or nothing drawable in one. That was wrong twice over: the map is worth
+  having for the address search on its own, and a box saying "no geometry here" leaves somebody
+  nowhere to go next. The window now opens either way and says in its own pane what is missing
+  and what to do about it.
+- **A map that cannot open says so.** A failure while building the window was written to a debug
+  trace, which goes nowhere in a released build — so the shortcut appeared to do nothing at all,
+  while the output window went on reporting the shapes it had found. It now shows what went
+  wrong.
+- **The record list shows the column chosen as the label.** Picking a label column now relabels
+  the ticks as well as the shapes, so the list reads the same as the map. Before a column is
+  chosen it shows the first value in the row that says anything, which beats a list of bare
+  numbers; where the chosen column is empty for a row, the tick shows nothing rather than
+  falling back, since a fallback there looks like the wrong column was picked.
+
 **Fixed**
+
+- **It no longer installs itself into Visual Studio.** The manifest listed Visual Studio
+  Community, Pro and Enterprise as targets, so VSIXInstaller offered Visual Studio alongside
+  SSMS and had it ticked by default — the extension arrived in Visual Studio without anybody
+  asking for it. Nothing in Jarvis is of any use there: every feature wants a SQL connection, a
+  T-SQL editor or the SSMS results grid. The package now targets **SSMS only**.
+  An existing copy in Visual Studio has to be removed there — Extensions, Manage Extensions —
+  since this only stops it happening again.
 
 - **The map opens on the screen SSMS is on.** It was appearing on the primary monitor regardless.
   The map runs on its own thread, so it has a Win32 owner but no WPF `Owner`, and
@@ -32,6 +57,186 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 - **Ctrl+K, Ctrl+M** opens the map. Global scope rather than editor scope, unlike the other
   Ctrl+K bindings: the map is about the results grid, so the key has to work with the focus in
   the grid and not only in the editor.
+
+- **Points built from pairs of ordinary number columns.** A great deal of spatial data never
+  becomes a geometry column — it sits as two numbers per point, named in pairs. Jarvis now finds
+  `START_X_LEFT` with `START_Y_LEFT`, `CENTER_X` with `CENTER_Y` and the like, and offers each as
+  a point layer beside the real geometry columns, switched on with a tick like any other.
+  Pairing is by name and exactly one token apart, so a left x never pairs with a right y — the
+  mistake a looser rule makes. `X`/`Y`, `LON`/`LAT`, `LNG`/`LAT` and `LONGITUDE`/`LATITUDE` are
+  understood as prefix or suffix, with underscores or in camel case, and each column is used
+  once. **The values then have to agree**: both must parse as numbers inside coordinate range,
+  so a `MIN_X`/`MIN_Y` pair holding prices matches by name and is thrown out rather than drawn
+  in the Atlantic.
+
+- **A country above the address search**, starting at the one this machine is set to, because
+  somebody searching "Main Road" means the country they are in — searching the planet returns
+  Nottinghamshire when Cape Town was wanted. **(anywhere)** clears it and searches the world.
+  Each provider is asked its own way: TomTom `countrySet`, Google `components=country`,
+  Nominatim `countrycodes`. Photon has no country parameter, so a larger page is fetched and
+  filtered on the country code its results carry — which keeps the typing on Photon rather than
+  on the service that asks not to be used for autocomplete.
+
+**Fixed**
+
+- **The chosen country settles which typed number is the latitude.** `-26.0558576, 27.9767704`
+  and `27.9767704, -26.0558576` now reach the same place. Both numbers are legal latitudes, so
+  no rule about ranges can separate them — but with South Africa selected, one ordering is in
+  South Africa and the other is out in the Atlantic, and only one of those was meant. Jarvis
+  takes whichever lands nearer the country and reports that it worked it out. The country's
+  position is looked up once and kept, not on every keystroke.
+  With **(anywhere)** selected there is nothing to reason from, so the pair is taken exactly as
+  entered — first number as x, the order the providers themselves read — and the status line
+  says so rather than pretending to certainty.
+
+- **The wheel no longer zooms in jumps, and how far it zooms is now a setting.** A notch moved a
+  whole level, and WebView2 reports large wheel deltas, so one flick could cross two or three
+  levels at once. **Tools ▸ Options ▸ Jarvis ▸ Map ▸ Mouse wheel zoom** offers Stepped, Balanced
+  and Smooth — named for how they feel rather than exposing the two numbers behind them — since
+  it is a matter of taste and no fixed pair suits everybody. On Google the same thing needed
+  fractional zoom turning on, which a raster map has off by default.
+
+**Added**
+
+- **Moving the map is animated.** Going to a search result, a coordinate, a country or a zoom to
+  fit now flies rather than cuts. A map that jumps leaves you nowhere — the shapes you were
+  looking at are gone with no sense of which way they went — and flying out, across and back in
+  keeps the two places related. Leaflet has this built in; Google has nothing equivalent, so its
+  move is interpolated frame by frame with an ease, which works only because fractional zoom is
+  enabled.
+
+- **As many dropped points as you like.** **Address here** and a typed coordinate used to
+  replace the previous point, which made comparing two places impossible. Each is now kept, with
+  its own popup and its own address. The right click menu offers **Remove this point** — the one
+  nearest where you right clicked, so clicking a pin removes that pin rather than the newest —
+  and **Remove all points** once there is more than one.
+
+- **Each provider is sent a point in the order it expects**, from one function with each
+  service's convention written down beside it: **latitude first** for TomTom, Azure Maps and
+  Google, **longitude first** for MapTiler, whose path is GeoJSON order. Nominatim and Stadia
+  Maps name their parameters, so there is nothing to get wrong there.
+  The order a service wants for a point it is *given* is a different question from the order a
+  geometry column stores its ordinates in — SQL writes x first, most of these services read
+  latitude first — and both conventions are in play at once. That is why it lives in one place
+  rather than at each call site.
+
+**Added**
+
+- **The layer panel can be dragged wider or narrower**, from the thin strip beside it. Dragging
+  and collapsing are separate strips on purpose: one control doing both would turn an unsteady
+  click into a resize nobody asked for. It is clamped at both ends — too narrow and its controls
+  are unusable, too wide and the map it describes has nowhere to be — snaps shut below half the
+  minimum, and a dragged width is remembered, so hiding and showing returns the panel to the
+  size you chose.
+
+- **The layer panel folds away**, from the narrow handle between it and the map, so a wide shape
+  can have the whole window. It slides rather than snapping: the map grows into the space the
+  panel leaves, and a map that resizes instantly gives no hint of where the panel went or that
+  it can be brought back. The handle sits outside the panel so it is still there to press when
+  the panel has gone, and the panel is clipped while it moves so its contents do not spill over
+  the map.
+
+- **Azure Maps, MapTiler and Stadia Maps** join TomTom, Google and OpenStreetMap, with **Azure
+  Maps satellite** as a seventh entry sharing the Azure key — imagery being what most spatial
+  data wants behind it. Each brings its own address search and reverse geocoding, so one key
+  covers the map and the searching, and each renders its required attribution.
+  They all serve ordinary XYZ raster tiles, so they went through the existing Leaflet path with
+  no new rendering code; only Google still needs one of its own. MapTiler and Stadia both answer
+  GeoJSON, so one reader serves them and a fourth service in that shape would need nothing new.
+  Keys are now read per provider in one place rather than passed into the map window, so
+  switching provider inside the window picks up the right key.
+
+- **An empty map opens on the selected country**, not on the whole world. Whoever opens a map
+  with nothing to draw is about to look something up, and it is almost certainly in the country
+  already chosen. Changing the country with nothing typed and nothing drawn moves the map there
+  too. With the country cleared, the world view is the honest answer and is left alone.
+
+- **One box for addresses and coordinates.** The separate "Go to x and y" field is gone: the
+  search box takes either, and works out which from what is typed. Two numbers are a coordinate
+  and anything else is an address — numbers cannot be mistaken for a street name, so the test is
+  safe both ways and there is no switch to set. While typing, a coordinate is *offered* as a row
+  rather than acted on: jumping the map on every keystroke of "28.0473" would move it four times
+  before the number was finished. Enter, or picking the row, goes there.
+- **A typed coordinate picked from the list now gets its address too.** Pressing Enter looked it
+  up, but choosing the row from the list only moved the map — so it dropped a point and said
+  nothing about where it was. Both routes now go through the same lookup, which is why only one
+  of them had it.
+- **The results list is drawn under the search box, not over the map.** As a popup it was
+  positioned against the window rather than the pane and could end up floating in the middle of
+  the map. It is now an overlay inside the pane, anchored to the top of everything below the
+  search box — so it still takes no space and pushes nothing down, but it cannot be drawn
+  anywhere else.
+- **The results list opens against the search box rather than halfway down the pane.** Moving it
+  off the popup put it in with the datasets, which are below the Zoom to fit button — so a match
+  appeared under the button, clear of the box that had been typed into and on top of the "nothing
+  to draw" note. The pane is now laid out in rows down to the search box with one stretching row
+  beneath it, and the list is anchored to the top of that row: directly under the box, and with
+  the row's height already settled, still unable to move anything.
+
+- **The results float above the pane instead of pushing it down.** A match arriving used to
+  shove the country, the coordinate box and every dataset down the pane, and pull them back up
+  when it went — so the pane moved under the mouse while it was being read. The list is now a
+  popup, which takes no space, and the address line under the box keeps its space rather than
+  appearing and disappearing.
+- **A tint per result set** behind each dataset block, so where one ends and the next begins is
+  obvious. Very pale, and the first is left plain: with one result set a colour would mean
+  nothing, and it must not compete with the colours on the shapes, which do.
+
+- **Latitude and longitude are shown with their x and y named** — "lat -26.2041 (y), long
+  28.0473 (x)" — in the status line, the coordinate box and the right click menu. Those two
+  namings are the commonest way to get a coordinate the wrong way round, and a window that deals
+  in both should say which it means.
+- **Go to x and y looks up the address as well**, showing it under the box and in the marker's
+  popup: somebody typing a coordinate out of a query usually wants to know where it is.
+- **Address here marks the point** and writes the answer into its popup, so it sits beside the
+  place it describes instead of only on the status line.
+
+- **Go to x and y**, taking the pair **either way round**. A number past 90 can only be a
+  longitude, so most real coordinates sort themselves out whichever order they were typed;
+  where both are within 90 the **Coordinates are longitude first** setting decides and the
+  status line says which way round it read them, so a point that lands oddly can be explained.
+  Comma, space, tab or semicolon separate the pair, and the parsing is invariant so a machine
+  set to a comma decimal separator reads it the same.
+
+- **Remove the point** in the right click menu takes away the marker left by a typed coordinate
+  or by **Address here**, and clears the address under the search box with it. It is shown only
+  when there is a point to remove — a row that does nothing is worse than no row — which the
+  menu now supports generally: an item can say when it applies.
+
+- **A right click menu on the map**: copy the coordinates in either order, look up the address,
+  or centre the map there. Both orders are offered because both are wanted — latitude first for
+  a map site, longitude first for a `geometry::Point`. The items are a list in one place, so
+  another can be added later as a label and what it does rather than any new plumbing. The
+  browser's own menu is suppressed so only this one appears, and it is kept inside the window so
+  a right click near an edge cannot open a menu half of which is unreachable.
+
+- **The address under a shape.** A shape's popup has an **Address here** button that reverse
+  geocodes the exact point clicked — not the shape's centre, which for a long road is nowhere
+  near where you were looking. Whichever provider draws the map does the lookup, so the key
+  already entered is the only one needed; OpenStreetMap uses Nominatim, which permits a reverse
+  lookup unlike the autocomplete it asks callers not to do.
+  Asked for rather than fetched on opening: a click is not a request to call somebody else's
+  geocoder, and on a paid key a popup that queried the internet every time would be a bill. One
+  point at a time, never in a loop over a result set.
+
+- **A dataset is now the result set, with its geometry columns as a multi-select inside it.**
+  Each geometry column was becoming a dataset of its own, so a query selecting a shape, its
+  centroid and its two end points showed as four datasets that each claimed the same two shapes
+  — the same rows counted four times. It is now one dataset per result set, with a tick per
+  geometry column deciding which are drawn, and **only the first is drawn to begin with**:
+  several geometries per row piled on top of each other is unreadable.
+  **Swap lat/long** and **Label** now apply to the whole dataset, since every geometry column of
+  one row set was written the same way round and describes the same rows, and a **record** is a
+  row — switching it off removes it from every geometry column at once. Zoom now frames what is
+  actually visible rather than every column including the hidden ones.
+
+- **Shapes can be labelled with a column of your choosing.** Each layer has a **Label**
+  dropdown listing its own columns; pick one and every shape is captioned with that value, the
+  way SSMS's own Spatial results tab labels its polygons. Per layer, because two layers rarely
+  share a column worth showing. The values were already sent with the geometry, so it asks the
+  server nothing. Labels are drawn with a white halo and no box, since a bubble on every polygon
+  would hide the thing being labelled; a label goes and returns with its record, and survives a
+  swap of lat/long or a change of provider.
 
 - **Every record on the map can be switched on and off.** **Records** under each layer lists its
   shapes with their number, their colour and the first identifying value from their row; any one

@@ -19,12 +19,12 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.907.1.1**
+**Latest release: 2026.909.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.zip)
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.907.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.907.1.1/Jarvis.SSMSExtension-2026.907.1.1.zip).
+2026.909.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.1/Jarvis.SSMSExtension-2026.909.1.1.zip).
 
 It holds the extension and the install scripts together. Extract it, **close SSMS**, then run from
 the extracted folder:
@@ -39,7 +39,7 @@ That is the whole install. It finds SSMS on its own and hands the package to the
 `.\install.ps1 -DryRun` shows the resolved paths and changes nothing, if you would rather look
 first.
 
-**Just the extension?** [Jarvis.SSMSExtension-2026.907.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.907.1.1/Jarvis.SSMSExtension-2026.907.1.1.vsix) — double click it
+**Just the extension?** [Jarvis.SSMSExtension-2026.909.1.1.vsix](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.1/Jarvis.SSMSExtension-2026.909.1.1.vsix) — double click it
 and SSMS installs it. The scripts are the easier route, because they check that SSMS is closed,
 remove an older copy, and verify the package actually registered rather than assuming it did.
 
@@ -679,14 +679,56 @@ you will usually be when you want it.
 └──────────────────────┴──────────────────────────────┘
 ```
 
-Every geometry column becomes its own layer, with a tick to switch it off, its shape count and
-SRID, and **Zoom to fit**. Clicking a shape shows the rest of its row.
+**A dataset is a result set, not a column.** A query selecting a shape, its centroid and its two
+end points is *one* dataset of however many rows, with a tick per geometry column deciding which
+of them is drawn:
 
-**Each record has its own tick too.** Open **Records** under a layer and every shape is listed
-with its number, its colour and the first thing in its row that identifies it — switch any one
-off without disturbing the rest, or use **All on** / **All off** for the lot. What you switch
-off stays off through a **Swap lat/long** or a change of map provider, rather than quietly
-coming back.
+```
+┌─ Layers ────────────────────────┐
+│ Results                         │
+│ 2 records  ·  SRID 4326         │
+│ Geometry columns                │
+│   ☑ ■ SegGeom      (2)          │
+│   ☐ ■ SegCentroid  (2)          │
+│   ☐ ■ SegStart     (2)          │
+│   ☐ ■ SegEnd       (2)          │
+│   ☐ ■ SegGeomStr   (2)          │
+│ ☐ Swap lat/long                 │
+│ Label  [ RoadName          ▾ ]  │
+│ ▸ Records (2)                   │
+└─────────────────────────────────┘
+```
+
+**Only the first column is drawn to begin with.** Four geometries per row piled on top of one
+another is unreadable, so the rest are yours to switch on. Ticking several shows several.
+
+Clicking a shape shows the rest of its row. **Zoom to fit** frames what is currently visible.
+
+**The panel folds away, and resizes.** Drag the thin strip beside it to make it wider or
+narrower; click the chevron next to that to slide it out of the way and back. Two strips rather
+than one, so an unsteady click never turns into a resize. A width you drag to is remembered, so
+hiding and showing brings the panel back the size you left it. It is animated rather than snapping:
+the map grows into the space the panel leaves, and a map that changes size instantly gives no
+hint of where the panel went or that it can be brought back. The handle stays put either way,
+which is why it sits outside the panel rather than in it.
+
+**The window always opens**, even with no results, no spatial column, or nothing drawable in
+one. It says in its own pane what is missing and what to do about it, rather than refusing with
+a message box — and the map and the address search are worth having on their own.
+
+**Pick what each shape is labelled with.** Each dataset has a **Label** dropdown listing its
+columns — choose `NAME` and every suburb is captioned with its name, the way SSMS's
+own Spatial results tab does it. It is per layer because two layers rarely share a column worth
+showing: a boundary layer has a suburb name, a route layer a job number. The columns offered are
+the ones already sent with the geometry, so choosing one asks the server nothing and redraws
+instantly. Labels start off.
+
+**Each record has its own tick too.** Open **Records** under a dataset and every row is listed
+with its number, its colour and **the value of whichever column you chose as the label** — so
+the list reads the same as the captions on the map, and changing the label column relabels both.
+Switch any one off without disturbing the rest, or use **All on** / **All off** for the lot. A record is a row, so
+switching it off removes it from every geometry column at once. What you switch off stays off
+through a **Swap lat/long** or a change of map provider, rather than quietly coming back.
 
 The list is built when you first open it, so a layer of a thousand shapes costs nothing until
 you want to pick through it, and it lists the first 500 — past that the ticks stop being
@@ -701,6 +743,28 @@ still read as two layers.
 **All the result sets are drawn, not just the one in focus.** A batch that returns several sets
 stacks a grid for each, and every one of them is read; layers are then labelled
 `Result 2 · VectorData` so two sets with a column of the same name stay apart.
+
+### Points made from two number columns
+
+A great deal of spatial data never becomes a geometry column — it sits as two numbers per point:
+
+```
+START_X_LEFT   START_Y_LEFT   START_X_RIGHT   START_Y_RIGHT   CENTER_X   CENTER_Y
+27.98364100   -26.05278440    27.98364100     -26.05278440    27.98454   -26.05301
+```
+
+Jarvis finds those pairs and offers each as a point layer alongside the real geometry columns —
+`START_LEFT`, `START_RIGHT` and `CENTER` from the row above — switched on with a tick like any
+other.
+
+Pairing is **by name, one token apart**: `START_X_LEFT` goes with `START_Y_LEFT` and never with
+`START_Y_RIGHT`, which is the mistake a looser rule makes. `X`/`Y`, `LON`/`LAT`, `LNG`/`LAT` and
+`LONGITUDE`/`LATITUDE` are all understood, as prefix or suffix, with underscores or in camel
+case — `CenterX` reads the same as `CENTER_X`. Each column belongs to one pair only.
+
+**The values have to agree.** Both columns must parse as numbers within coordinate range before
+anything is drawn, so a `MIN_X`/`MIN_Y` pair holding prices matches by name and is then thrown
+out rather than plotted in the Atlantic. A row where either is blank simply has no point.
 
 ### Binary or text, either will do
 
@@ -720,13 +784,112 @@ column is a word, not a shape, and is left alone.
 
 ### Which map
 
-TomTom by default, and **Google** or **OpenStreetMap** from the window itself. TomTom and Google
-need an API key of your own — **Tools ▸ Options ▸ Jarvis ▸ Map** — and without one Jarvis says
-which key is missing and offers OpenStreetMap, which needs none, rather than showing you an empty
-window. Google is drawn through its own API rather than as tiles, because its terms do not allow
-its tiles in another map library.
+Seven to choose from, switchable on the window itself:
+
+| provider | key | notes |
+|---|---|---|
+| **TomTom** | yes | the default |
+| **Google Maps** | yes | drawn through its own API — its terms do not allow its tiles in another library |
+| **OpenStreetMap** | **none** | always available, and what is offered when a key is missing |
+| **Azure Maps** | yes | road map, with its own address search |
+| **Azure Maps satellite** | same key | imagery, which is usually what spatial data wants behind it |
+| **MapTiler** | yes | clean street styling, with its own address search |
+| **Stadia Maps** | yes | pale Alidade styling, good under coloured shapes |
+
+Keys go in **Tools ▸ Options ▸ Jarvis ▸ Map**, one per provider — Azure's two entries share the
+one Azure key. Without a key Jarvis says which one is missing and points at OpenStreetMap rather
+than showing an empty window.
+
+Each keyed provider does its own address search and reverse geocoding, so the key you enter
+covers the map *and* the searching. Attribution is rendered on the map for every one, as their
+terms require.
+
+### The address under a shape
+
+Click a shape and its popup has an **Address here** button. It looks up the address at the exact
+point you clicked — not the middle of the shape, which for a long road is nowhere near where you
+were looking — and writes it beside the button.
+
+It is asked for rather than fetched automatically. A click is not a request to call somebody
+else's geocoder, and a popup that queried the internet every time it opened would be both a
+nuisance and, on a paid key, a bill. One point at a time, never in a loop over a result set.
+
+Whichever provider is drawing the map does the lookup, so the key already entered is the only
+one needed: TomTom and Google use their own reverse geocoders, and OpenStreetMap uses Nominatim
+— which permits a reverse lookup, unlike the autocomplete it asks callers not to do.
+
+### Right click the map
+
+Right click anywhere on the map for a menu of that point:
+
+```
+Copy latitude (y), longitude (x)
+Copy longitude (x), latitude (y)
+────────────────────────────────
+Address here
+Centre the map here
+────────────────────────────────
+Remove the point                 ← only when there is one
+```
+
+**Points accumulate.** Ask for as many addresses as you like — each keeps its own marker and its
+own popup, so two places can be compared side by side. **Remove this point** takes the one
+nearest where you right clicked, so clicking a pin removes *that* pin rather than the newest, and
+**Remove all points** appears once there is more than one. Neither row is shown when there is
+nothing to remove.
+
+**Moving the map is animated** — a search result, a coordinate, a country or **Zoom to fit** all
+fly rather than cut, so you can see which way the map went. How far the wheel zooms is yours to
+set under **Tools ▸ Options ▸ Jarvis ▸ Map ▸ Mouse wheel zoom**: Stepped moves whole levels and
+keeps tiles at their own scale, Smooth moves in quarters, Balanced is halfway.
+
+Both orders are offered because both are wanted: latitude first to paste into a map site,
+longitude first to paste into a `geometry::Point`. **The x and y are named alongside** wherever a
+latitude and longitude are shown — the two namings are the commonest way to get a coordinate the
+wrong way round.
+
+**Address here** marks the point and writes the address into its popup, so the answer sits beside
+the place it describes rather than only on the status line.
+
+The menu is a list in one place, so adding to it later is a label and what it does — no new
+plumbing.
+
+### Your own x and y
+
+**Go to x and y** takes a pair of numbers, **either way round**:
+
+| you type | with **South Africa** chosen | with **(anywhere)** |
+|---|---|---|
+| `151.2093 -33.8688` | long 151.2093, lat −33.8688 — 151 cannot be a latitude | the same |
+| `-33.8688 151.2093` | the same point, order irrelevant | the same |
+| `27.9767704 -26.0558576` | long 27.98, lat −26.06 | long 27.98, lat −26.06 |
+| `-26.0558576 27.9767704` | **the same point** — the country settles it | long −26.06, lat 27.98, as entered |
+
+**The chosen country settles what the numbers cannot.** Both of `-26.0558576` and `27.9767704`
+are legal latitudes, so no rule about ranges can separate them — but one ordering is in South
+Africa and the other is two thousand miles out in the Atlantic, and if South Africa is the
+country being searched then only one of them was meant. Jarvis takes whichever lands nearer the
+country and says it worked it out.
+
+With **(anywhere)** selected there is nothing to reason from, so the pair is taken exactly as
+entered — the first number as x — which is the order the map providers themselves read, and the
+status line says so.
+
+It marks the point, **and looks the address up underneath** — somebody typing a coordinate out of
+a query usually wants to know where it actually is. The status line names the x and the y beside
+the latitude and longitude, so a point that landed oddly can be read rather than guessed at.
+
+A number past 90 can only be a longitude, so most real coordinates sort themselves out whichever
+order they were typed in; the country settles the rest. Comma, space, tab or semicolon all
+separate the pair, and the numbers are read invariantly so a machine set to a comma decimal
+separator reads them the same.
 
 ### Address search
+
+**Country** above the search confines it to one country, starting at the one this machine is set
+to — because somebody searching "Main Road" almost certainly means the country they are in, and
+searching the planet buries it among thousands. Pick **(anywhere)** to search the world instead.
+Changing the country re-runs whatever is already typed.
 
 Type an address and matches appear as you go, from three letters. Pick one and the map goes there
 and marks it; Escape clears it. The provider drawing the map does the searching, so the key
