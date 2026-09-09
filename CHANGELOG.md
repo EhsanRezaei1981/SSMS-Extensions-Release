@@ -16,6 +16,20 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **The installation target range is `[17.0,)`, not `[21.0,)`.** The Marketplace refused the
+  package: *"API version 21.0 is experimental, and not allowed in the Marketplace at this time."*
+  The lower bound of an installation target is an **API** version, whatever else it may look
+  like, and there has never been an API 21 — Visual Studio 2026 and the VS 18 shell that SSMS 22
+  runs on both still report 17.x. Microsoft's guidance is that compatibility is decided by the
+  lower bound alone and the upper bound is now ignored.
+  `[17.0,)` is also the safer of the two for installing: SSMS's own VSIXInstaller accepted
+  `[21.0,)` because it compares against the SSMS product version, while the Marketplace compares
+  against the API version, and 17.0 satisfies both readings. The cost is that the manifest can no
+  longer say "SSMS 21 and up" — the field cannot express it and pass validation — so the
+  supported versions are stated in the README and the listing. SSMS 18 and 19 could never load
+  this in any case.
+  `marketplace.ps1` now refuses a lower bound of 18 or higher, so this is caught before the form
+  is filled in rather than on upload.
 - **One snippet setting, not two.** The options page had **Snippet file** and, below it, a
   read-only **Snippet file in use** showing the resolved path — two rows for one file, when the
   path is already in **Jarvis ▸ About ▸ Files**. Its real job was to reveal the case where the
