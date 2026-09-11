@@ -16,6 +16,17 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **A `USE` in the script decides the database.** SSMS reports the database a query window was
+  *connected* to and nothing more — its `UIConnectionInfo` has no current-database member at all,
+  only the options the connect dialog filled in. So a script opening with `USE Reporting` was
+  working against Reporting while every completion, star expansion and hover asked the original
+  database about it, and offered the wrong tables without a word. The last `USE` before the caret
+  now wins, and it survives `GO`, because a batch separator ends a batch rather than the
+  connection. A `USE` inside a comment, a string, a query hint (`OPTION (USE HINT ...)`) or a
+  column called `use` is not a switch — each of those would otherwise repoint the whole list.
+- **The About box names the connection its catalogue came from** — server, database, then the
+  counts. "4,182 objects" said nothing about *which* 4,182, which is the only question worth
+  asking when the completion list looks wrong for the tab you are in.
 - **List Snippets shows its answer.** It wrote the snippet list to the Jarvis output pane and
   selected that pane — but selecting a pane inside a window that is closed leaves it closed, and
   in SSMS the Output window usually is. So the command wrote a perfectly good list into somewhere

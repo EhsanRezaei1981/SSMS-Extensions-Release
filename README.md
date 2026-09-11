@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.909.1.5**
+**Latest release: 2026.911.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.909.1.5 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.5/Jarvis.SSMSExtension-2026.909.1.5.vsix).
+2026.911.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.1/Jarvis.SSMSExtension-2026.911.1.1.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.909.1.5/Jarvis.SSMSExtension-2026.909.1.5.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.1/Jarvis.SSMSExtension-2026.911.1.1.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -549,7 +549,18 @@ so Tab can be left completely alone.
 
 ### Where the metadata comes from
 
-The connection behind the query window that has focus, found through SSMS's own object model.
+The connection behind the query window that has focus, found through SSMS's own object model —
+and, where the script says otherwise, the database it says.
+
+**A `USE` in the script wins.** SSMS reports the database a window was *connected* to and nothing
+more: its connection info has no current-database member at all, only what the connect dialog
+filled in. So the last `USE` before the caret decides, and it survives `GO` — a batch separator
+ends a batch, not the connection. A `USE` in a comment, a string, a query hint or a column named
+`use` is not a switch.
+
+Which connection the loaded catalogue belongs to is under **Jarvis ▸ About ▸ Right now**, named
+rather than counted, for exactly the moment the list looks wrong for the tab you are in.
+
 Objects, columns, foreign keys and routine parameters are read once per database with four
 `sys.*` queries, kept as an immutable snapshot, and loaded on a background thread. Tables, views,
 stored procedures and functions all come across — procedures are read separately from columns,
