@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.911.1.1**
+**Latest release: 2026.911.1.2**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.911.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.1/Jarvis.SSMSExtension-2026.911.1.1.vsix).
+2026.911.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.2/Jarvis.SSMSExtension-2026.911.1.2.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.1/Jarvis.SSMSExtension-2026.911.1.1.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.2/Jarvis.SSMSExtension-2026.911.1.2.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -262,6 +262,28 @@ keys: Tab expands exactly as it always did.
 Turn it off under **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Show the Tab hint beside a ***.
 It also stays away when **Expand \* to columns on Tab** is off, rather than advertising a Tab
 that would only indent.
+
+### Matching brackets are outlined
+
+Put the caret after a `(` or a `)` and both it and its partner are outlined. The same for a
+`[bracketed name]`, whose ends are its own first and last character. The bracket *behind* the
+caret wins over the one in front, because that is where the caret sits the moment you type one.
+
+The pair is worked out from the **parsed** script, not by counting characters — which is what
+makes it right in ordinary T-SQL:
+
+```sql
+SELECT ('a ) b')     -- the ")" in the literal is text, not the partner
+SELECT (1 -- keep (this
+)                    -- the "(" in the comment is not an opening bracket
+```
+
+An unbalanced bracket highlights **nothing**. A pair that is not a pair is worse than no pair at
+all, because it sends you looking in the wrong place.
+
+Turn it off under **Tools ▸ Options ▸ Jarvis ▸ General ▸ Highlight matching brackets**. The
+whole script is only parsed when the caret is actually beside a bracket, so moving around a long
+procedure costs nothing.
 
 ### What you picked last comes up first
 

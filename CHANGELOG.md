@@ -16,6 +16,18 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **Matching brackets are highlighted.** Put the caret after a `(` or a `)` and both it and its
+  partner are outlined; the same for a `[bracketed name]`, whose ends are its own first and last
+  character. The one *behind* the caret wins over the one in front, since that is where the caret
+  sits after typing one.
+  The pair comes from the parsed script rather than from counting characters, which is what makes
+  it right in ordinary T-SQL: the parenthesis in `'a ) b'` is text and the one in `-- keep (this`
+  is a comment, and a counter jumps the eye to either. An unbalanced bracket highlights
+  **nothing** — a pair that is not a pair is worse than no pair at all. Turn it off under
+  **Tools ▸ Options ▸ Jarvis ▸ General ▸ Highlight matching brackets**.
+  Drawn on the editor's existing TextMarker layer rather than one exported through MEF, as the
+  rest of Jarvis avoids MEF in the SSMS shell; the whole script is only lexed when the caret is
+  actually beside a bracket, so moving through a long procedure costs nothing.
 - **A `USE` in the script decides the database.** SSMS reports the database a query window was
   *connected* to and nothing more — its `UIConnectionInfo` has no current-database member at all,
   only the options the connect dialog filled in. So a script opening with `USE Reporting` was
