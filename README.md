@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.911.1.2**
+**Latest release: 2026.922.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.911.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.2/Jarvis.SSMSExtension-2026.911.1.2.vsix).
+2026.922.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.922.1.1/Jarvis.SSMSExtension-2026.922.1.1.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.911.1.2/Jarvis.SSMSExtension-2026.911.1.2.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.922.1.1/Jarvis.SSMSExtension-2026.922.1.1.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -87,7 +87,6 @@ Jarvis
 │     └── Format on Save             off by default
 ├── Active Style ▸
 │     ├── Jarvis Standard
-│     ├── Jarvis Gold
 │     ├── Jarvis Compact
 │     ├── Jarvis River
 │     ├── Jarvis Light
@@ -262,6 +261,28 @@ keys: Tab expands exactly as it always did.
 Turn it off under **Tools ▸ Options ▸ Jarvis ▸ IntelliSense ▸ Show the Tab hint beside a ***.
 It also stays away when **Expand \* to columns on Tab** is off, rather than advertising a Tab
 that would only indent.
+
+### Your own variables are in the list
+
+Type `@` and the list offers what the script has declared above the caret, with each one's
+declared type beside it:
+
+```
+@PageIndex    INT variable
+@PageSize     INT variable
+@TableName    VARCHAR(50) variable
+@Json         NVARCHAR(MAX) parameter
+```
+
+The catalogue cannot know these — they exist only in the text you are typing — so they are read
+from the script itself. A procedure's or function's parameters count as well, and typing `pag`
+finds `@PageIndex` without your having to reach for the `@` first.
+
+**Only declarations.** A `DECLARE` list and a parameter list; every other `@name` in a script is a
+*use*, and offering those back would turn a typo into a suggestion and then into a second typo.
+Nothing appears above its own `DECLARE`, because a variable cannot be used before it exists, and
+**`GO` clears the list** — a variable does not survive the batch separator, and one offered after
+it produces a script that only fails when it runs.
 
 ### Matching brackets are outlined
 
@@ -511,6 +532,16 @@ answers: the first is safe to write a call for, the second is not.
 Put the caret on a procedure, function, view or trigger and press **F12**. Jarvis reads the
 source with `OBJECT_DEFINITION` and opens it in a new query window on your connection, ready to
 change. It is a script rather than a live object, so nothing is altered until you execute it.
+
+**It opens as `ALTER`, not `CREATE`.** SQL Server keeps what was originally typed, so a definition
+always comes back beginning `CREATE` — and running it straight back fails with *"There is already
+an object named ..."*, which tells you nothing about what you actually did. Only the keyword that
+opens the module is changed: a `CREATE TABLE #t` inside the body, or the word in a header comment,
+is left exactly as it is, and `CREATE OR ALTER` collapses to `ALTER` rather than becoming
+`ALTER OR ALTER`. The replacement takes the case of the word it replaces, so a lower case
+definition does not come back with one shouted word in it. Turn it off under **Tools ▸ Options ▸
+Jarvis ▸ General ▸ Open definitions as ALTER** to see the definition exactly as the server
+stores it.
 
 The name is read as written: bracketed names with spaces, three part `Db.Schema.Object` names,
 and the caret at either end of the word all work.
@@ -1137,18 +1168,25 @@ if you want them gone.
 
 ## Style profiles
 
-Pick one from **Jarvis ▸ Active Style**. **Jarvis Gold is the default** — it is the style this
-formatter was built to produce. Anything you have already chosen is left alone; the default only
-applies where nothing has been picked.
+Pick one from **Jarvis ▸ Active Style**. **Jarvis Standard is the default**, and it is the style
+this formatter was built to produce.
 
 | Profile | What it looks like |
 |---|---|
-| **Jarvis Gold** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
-| **Jarvis Standard** | 4 space indents, upper cased keywords, trailing commas, wrap at column 120 |
+| **Jarvis Standard** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line, and **each `AND` or `OR` of a predicate on its own line**. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
 | **Jarvis Compact** | 2 space indents, wrap at 160, joins and predicates kept together |
 | **Jarvis River** | Every column on its own line with the comma in front |
 | **Jarvis Light** | Normalise whitespace and casing, change as few line breaks as possible |
 | **Jarvis Custom** | Everything on the Style options page is yours to set |
+
+**Jarvis Gold has been retired.** It was the aligned style above under a second name, beside a
+plainer Standard that existed only because it was what the formatter could do first — two house
+styles, one too many. Standard *is* that style now, with one change: each `AND` and `OR` of a
+predicate takes its own line, which is the one thing the plainer profile did better.
+
+If you had Gold selected, Jarvis moves you to Standard the next time it starts, so nobody is left
+on a profile that no longer exists. The name still works in a `.jarvis-sqlformat` file and on the
+command line's `--style`, so a checked-in team style or a build script keeps running.
 
 ### Before
 
@@ -1178,6 +1216,23 @@ Turn it off under **Tools ▸ Options ▸ Jarvis ▸ General ▸ Terminate state
 Line breaking is driven by whether things **fit**. A short list stays on one line; the same list
 past the right margin explodes one item per line. Set `List breaking` to `OnePerLine` if you would
 rather it always exploded.
+
+**A call's named parameters always go one per line**, under the call:
+
+```sql
+EXECUTE dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson
+    @ErrorCode = @ErrorCode,
+    @ErrorMessage = @ErrorMessage,
+    @OutputJson = @OutputJson OUTPUT;
+```
+
+The shape `CREATE PROCEDURE` already uses for the parameters it declares, so a call and its
+declaration read alike — and indented under the call rather than aligned after the name, since a
+long name would otherwise leave fifty columns of nothing before anything is said.
+
+Only named-parameter calls. `EXEC dbo.usp_Do 1, 2`, `EXEC ('SELECT 1')` and a call with a single
+parameter are left exactly as they were, and the return value of `EXEC @rc = dbo.usp_Do @a = 1`
+stays with the procedure it belongs to.
 
 ## Telling the formatter to leave something alone
 

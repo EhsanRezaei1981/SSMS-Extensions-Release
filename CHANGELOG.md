@@ -16,6 +16,98 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
   nowhere to go next. The window now opens either way and says in its own pane what is missing
   and what to do about it.
+- **The list still works after a sub-query has closed.** Reported against an `ON` predicate
+  carrying an `EXISTS (...)`: everything after the closing bracket offered nothing, so
+  `and t5.` gave an empty list where the columns of `t5` belonged.
+  The search for the statement the caret is in walks backwards, and a sub-query's own `SELECT` is
+  a statement starter like any other — so the walk stopped there and read the rest of the
+  statement as *that* one. The clause came out as the sub-query's `WHERE`, the only table in
+  scope was the sub-query's, and the alias in front of the caret resolved to nothing. A bracket
+  that has already closed is now stepped over whole. A bracket that is still **open** is not, so
+  the caret inside a sub-query still gets the sub-query.
+  It was never only about `EXISTS`: `WHERE x IN (SELECT ...) AND t.` and a scalar sub-query in a
+  `SELECT` list were equally blind.
+- **Typing `[` no longer empties the completion list.** Reported against
+  `exec [Lic].[Lic_Sp_...`, which offered nothing: the moment the second bracket was typed the
+  qualifier was lost and the list fell back to keywords. It was not an EXEC problem —
+  `SELECT * FROM [Sec].[` and `FROM Sec.[` were just as broken.
+  An unterminated `[` has no end for the lexer to find, so the name it produces runs to the end
+  of the script and swallows the dot and the schema in front of it. The qualifier is now read
+  from the text for that case, which is precisely the case the tokens cannot describe. A `[`
+  with nothing in front of it is still not a qualified name, so it goes on offering the whole
+  catalogue.
+- **One house style. Jarvis Gold is retired and Jarvis Standard is that style.** Gold was the
+  aligned, one-per-line style under a second name, sitting beside a plainer Standard that existed
+  only because it was what the formatter could do first. Two house styles is one too many.
+  **Anybody who had Gold selected is moved to Standard** the next time Jarvis starts: the setting
+  stored a 5, and with the value gone it reads back as a profile the enum does not define, which
+  is exactly what the migration looks for — otherwise the options page would show a blank profile
+  and the formatter would quietly fall through to a default. The number is not reused, and the
+  name still resolves on the command line and in a `.jarvis-sqlformat` file, so a checked-in team
+  style or a build script passing `--style "Jarvis Gold"` keeps working instead of failing on a
+  profile that went away.
+- **A call is written tight: `STRING_SPLIT(@Keys)`, not `STRING_SPLIT (@Keys)`.** The space
+  between a name and its bracket came from the retired Gold profile and is the one thing about
+  it that surprised everyone who read the output — everywhere else in the language, and in every
+  other formatter, a call is tight. Data types were already tight and stay that way.
+- **Each `AND` and `OR` of a predicate takes its own line.** Gold kept them with the predicate,
+  on the grounds that a condition reads as one thought; in practice it produced lines nobody
+  could read — `WHERE a = 1 AND b = 1 AND EXISTS (...)` gives no way to find, change or review a
+  single condition, and a diff of it reports only that the line changed. This is the one thing
+  the retired plainer profile did better, and it is what Standard does now.
+  The `ON` of a join keeps Gold's rule: the predicate goes on its own line under the join.
+- **F12 opens a module as `ALTER`.** SQL Server stores what was originally typed, so every
+  definition came back beginning `CREATE` — and running it straight back fails with "There is
+  already an object named ...", which says nothing about what the author actually did. Opened to
+  be read that was fine; opened to be edited it was the one word that had to be changed by hand
+  every single time.
+  Only the keyword that opens the module is touched. A `CREATE TABLE #t` in the body and the word
+  in a header comment are left exactly as they are — it works on the lexed script rather than on
+  the first "CREATE" the text happens to contain — `CREATE OR ALTER` collapses to `ALTER` rather
+  than becoming `ALTER OR ALTER`, and the replacement takes the case of the word it replaces, so
+  a lower case definition does not come back with one shouted word in the middle of it. Turn it
+  off under **Tools ▸ Options ▸ Jarvis ▸ General ▸ Open definitions as ALTER**.
+- **The completion list knows the script's own variables.** Typing `@` now offers what the script
+  has declared above the caret — `@PageIndex`, `@UserId` and the rest — with the declared type
+  beside each. The catalogue cannot know these; they exist only in the text being typed, so they
+  are read from it. Procedure and function parameters count too, and typing `pag` finds
+  `@PageIndex` without the `@`.
+  Only declarations: a `DECLARE` list and a parameter list. Every other `@name` in a script is a
+  *use*, and offering those back would turn a typo into a suggestion and then into a second typo.
+  Nothing is offered above its own `DECLARE`, since a variable cannot be used before it exists,
+  and `GO` clears the list, because a variable does not survive the batch separator — offering
+  one that no longer exists produces a script that only fails when it runs.
+- **A statement is terminated before the next one, not only between two SELECTs.** Reported as a
+  missing semicolon after a `DECLARE` whose value was a function call; it was in fact every
+  `DECLARE` without one. The rule said a `SELECT` begins a statement only when the statement
+  before it was *also* a `SELECT`, so `DECLARE @a INT` followed by a query was read as a single
+  statement — the `DECLARE` went unterminated and the `SELECT` was pulled up onto its line. The
+  same for `SET`, `PRINT` and `EXEC`.
+  It is now the other way round: a `SELECT` begins a statement unless the one it stands in can
+  genuinely end with it — `INSERT INTO t SELECT` and `WITH cte AS (...) SELECT` — or unless it
+  follows `AS`, a comma, an operator, an opening bracket or a `UNION`, which is where a subquery
+  and a union already lived.
+- **A call's named parameters go one per line.** `EXECUTE dbo.usp_Do @a = @a, @b = @b, …` came
+  out on a single line, where nothing shows which value belongs to which name and a diff of it
+  says only that the line changed. Each parameter now sits on its own line under the call — the
+  shape `CREATE PROCEDURE` already used for the parameters it declares, so a call and its
+  declaration read alike. Indented under the call rather than aligned after the procedure's name,
+  because a name like `dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson` leaves fifty columns of
+  nothing before anything is said.
+  Only named-parameter calls: `EXEC dbo.usp_Do 1, 2`, `EXEC ('SELECT 1')` and a single-parameter
+  call are untouched. The optional return value is stepped over, so the `@rc` of
+  `EXEC @rc = dbo.usp_Do @a = 1, @b = 2` is not taken for the first argument — it is the first
+  variable in the statement, and breaking in front of it would put the procedure's own name on
+  the parameter list's line.
+- **No semicolon inside an `OFFSET … FETCH` clause.** A paged query came back terminated after
+  the `OFFSET`, which split one statement into two — and the second, a `FETCH` with no cursor,
+  does not run at all. `FETCH` was on the list of words that always begin a statement, which is
+  true of the cursor `FETCH` and not of the paging one.
+  The word in front settles it: the paging `FETCH` always follows `ROW` or `ROWS`, the cursor one
+  follows the end of the statement before it, and neither `ROW` nor `ROWS` can be an identifier
+  in that position because both are reserved. `FETCH` also had to be added to the clause keywords
+  to keep its own line under the `OFFSET`, which it had been getting only by being mistaken for a
+  statement.
 - **Matching brackets are highlighted.** Put the caret after a `(` or a `)` and both it and its
   partner are outlined; the same for a `[bracketed name]`, whose ends are its own first and last
   character. The one *behind* the caret wins over the one in front, since that is where the caret
