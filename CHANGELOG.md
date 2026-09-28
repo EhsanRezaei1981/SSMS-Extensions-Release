@@ -46,16 +46,55 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   name still resolves on the command line and in a `.jarvis-sqlformat` file, so a checked-in team
   style or a build script passing `--style "Jarvis Gold"` keeps working instead of failing on a
   profile that went away.
-- **The map starts when SSMS has already used its browser.** It failed with "Value does not fall
-  within the expected range" — an error that names nothing, appears beside a perfectly good layer
-  list, and reads like a fault in the data. It is not: a process may have exactly one WebView2
-  user data folder, whoever asked for it first. SSMS uses WebView2 itself for Copilot and its
-  sign-in dialogs, so asking for a folder of our own worked only when the map was opened before
-  any of those, and failed for the rest of the session afterwards.
-  Jarvis now takes its own profile when it can and shares the one already open when it cannot —
-  harmless here, since the map stores nothing. Each attempt gets a fresh control, because a
-  WebView2 whose initialisation has failed cannot be initialised again. If both fail, the message
-  says what each one said rather than calling it unexpected.
+- **A broken bracket indents from the line that opened it.** `MIN(x) OVER (PARTITION BY ...)`
+  hanging off a column at column 21 put its list at column 4 — to the *left* of the expression
+  that owns it — and its closing bracket at column 0.
+  Indent level and visual column are the same thing until alignment moves a line right: a column
+  list aligned under its first item has an indent level of one and a content column of twenty-one,
+  and a bracket opened there was measuring from the level. It now measures from the line, so the
+  contents sit under whatever owns them and the closing bracket returns to it. Where a line has
+  not been moved, the two agree and nothing changes.
+  A sub-query inside such a bracket is a separate matter and is unchanged: its contents are laid
+  out by its own clause rules, which still work in indent levels. The house style aligns those
+  brackets rather than breaking them, so it does not arise there.
+- **No semicolon between a CTE and the statement that uses it.** `WITH A AS (...)` followed by
+  `INSERT INTO #Dups ... SELECT ... FROM A` came back terminated after the CTE — two statements,
+  neither of which runs: the first defines something nothing uses, the second names a table that
+  no longer exists. A common table expression can feed an `INSERT`, `UPDATE`, `DELETE` or `MERGE`
+  as readily as a `SELECT`, and only the `SELECT` was allowed to stay with it.
+  The consuming statement also starts its own line now, level with the `WITH`, instead of sitting
+  against the closing bracket of the last expression where the eye reads it as part of one.
+  Once that keyword is seen the statement stops calling itself a `WITH` and becomes what it
+  really is, so the `SET` of a `WITH ... UPDATE` stays with its UPDATE while a `SET` after a
+  `WITH ... SELECT` is still a statement of its own. Inside a `MERGE`, `WHEN MATCHED THEN UPDATE`
+  and `WHEN NOT MATCHED THEN INSERT` remain clauses rather than statements.
+- **A large result set draws on the map.** "The map could not start: Value does not fall within
+  the expected range", beside a layer panel that had read all 1,656 records perfectly. The page
+  carries the shapes inside it and is handed to the browser control with `NavigateToString`,
+  which is capped at **2 MB** of UTF-8 and throws past it — with a message that names neither the
+  limit nor the size, and reads like a fault in the data or the install. It was neither: it was
+  simply too much geometry for one string.
+  A page over the cap is now written to a file and the control pointed at that instead, and the
+  file is removed when the window closes. Under the cap nothing touches the disk, which is the
+  ordinary case and the one that always worked. If writing the file fails too, the message says
+  how large the page was and what to do about it — draw fewer columns, or lower **Most shapes to
+  draw**.
+- **The map starts, and stops closing itself.** Two symptoms, one bug: "The map could not start:
+  Value does not fall within the expected range" beside a perfectly good layer list, and — other
+  times — the window vanishing with no message at all.
+  The map runs on a thread of its own, and the window's Loaded handler starts the browser control
+  during `Show()`. WPF installs the thread's synchronisation context only once the dispatcher is
+  running, which is *after* that. With none installed, every `await` resumed on a thread pool
+  thread; a thread pool thread is MTA, so the WebView2 asked to initialise there refused with
+  `E_INVALIDARG`, and every later touch of a WPF object from that thread threw — killing the
+  thread and taking the window with it, silently. Both faces of it depended on timing, which is
+  why neither happened every time.
+  The context is now installed before anything on that thread can await. The Loaded handler is
+  also guarded: it is `async void`, so anything escaping it went to the thread as an unhandled
+  exception and the window simply disappeared.
+  Starting the browser also falls back to sharing the profile already open in SSMS if a profile
+  of its own is refused, each attempt on a fresh control — a WebView2 whose initialisation has
+  failed cannot be initialised again — and if both fail, the message now says what each one said.
 - **A call is written tight: `STRING_SPLIT(@Keys)`, not `STRING_SPLIT (@Keys)`.** The space
   between a name and its bracket came from the retired Gold profile and is the one thing about
   it that surprised everyone who read the output — everywhere else in the language, and in every

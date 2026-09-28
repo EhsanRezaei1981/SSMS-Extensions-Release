@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.928.1.2**
+**Latest release: 2026.928.1.6**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.928.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.2/Jarvis.SSMSExtension-2026.928.1.2.vsix).
+2026.928.1.6 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.6/Jarvis.SSMSExtension-2026.928.1.6.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.2/Jarvis.SSMSExtension-2026.928.1.2.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.6/Jarvis.SSMSExtension-2026.928.1.6.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -861,6 +861,12 @@ The list is built when you first open it, so a layer of a thousand shapes costs 
 you want to pick through it, and it lists the first 500 — past that the ticks stop being
 something anybody scrolls through. Records beyond the limit stay on the map; they simply have no
 tick of their own, and the pane says so.
+
+**A big result set is drawn from a file rather than from memory.** The shapes travel to the map
+inside the page itself, and the call that hands a page to the browser is capped at 2 MB — a
+couple of thousand road segments is past it. Over that size the page is written to a temporary
+file and removed again when the window closes; under it nothing touches the disk. The ceiling on
+how many shapes are drawn at all is **Tools ▸ Options ▸ Jarvis ▸ Map ▸ Most shapes to draw**.
 
 **Every record is drawn in its own colour**, so shapes that touch or overlap stay apart. The
 colour comes from the row number rather than a list, stepping the hue far enough each time that
