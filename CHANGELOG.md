@@ -46,6 +46,16 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   name still resolves on the command line and in a `.jarvis-sqlformat` file, so a checked-in team
   style or a build script passing `--style "Jarvis Gold"` keeps working instead of failing on a
   profile that went away.
+- **The map starts when SSMS has already used its browser.** It failed with "Value does not fall
+  within the expected range" — an error that names nothing, appears beside a perfectly good layer
+  list, and reads like a fault in the data. It is not: a process may have exactly one WebView2
+  user data folder, whoever asked for it first. SSMS uses WebView2 itself for Copilot and its
+  sign-in dialogs, so asking for a folder of our own worked only when the map was opened before
+  any of those, and failed for the rest of the session afterwards.
+  Jarvis now takes its own profile when it can and shares the one already open when it cannot —
+  harmless here, since the map stores nothing. Each attempt gets a fresh control, because a
+  WebView2 whose initialisation has failed cannot be initialised again. If both fail, the message
+  says what each one said rather than calling it unexpected.
 - **A call is written tight: `STRING_SPLIT(@Keys)`, not `STRING_SPLIT (@Keys)`.** The space
   between a name and its bracket came from the retired Gold profile and is the one thing about
   it that surprised everyone who read the output — everywhere else in the language, and in every
