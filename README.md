@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.928.1.6**
+**Latest release: 2026.1001.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.928.1.6 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.6/Jarvis.SSMSExtension-2026.928.1.6.vsix).
+2026.1001.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1001.1.1/Jarvis.SSMSExtension-2026.1001.1.1.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.928.1.6/Jarvis.SSMSExtension-2026.928.1.6.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1001.1.1/Jarvis.SSMSExtension-2026.1001.1.1.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -627,6 +627,12 @@ their own, so switching tabs switches catalogue with them — and a background l
 one database never changes what another window sees. The list header names the database it is
 drawing from, so with several tabs open you can see at a glance which one you are getting.
 
+**A three part name reaches into another database.** Type `Reporting.dbo.` and the list is drawn
+from `Reporting`, on the same server and the same login — bracketed and mixed forms too, so
+`[Lesley_Data].[dbo].[` and `Reporting.[dbo].` both work. The schema in front of the caret is
+still read as a schema; it is simply read in that catalogue. Each database gets its own cached
+snapshot, so the first name into one pays for reading it and nothing after that does.
+
 **Jarvis ▸ IntelliSense ▸ Refresh Metadata** (Ctrl+K, Ctrl+R) re-reads just the database of the window you
 are in, when you have just changed a table. The others stay cached.
 
@@ -1179,7 +1185,7 @@ this formatter was built to produce.
 
 | Profile | What it looks like |
 |---|---|
-| **Jarvis Standard** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line, and **each `AND` or `OR` of a predicate on its own line**. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
+| **Jarvis Standard** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line, and **each `AND` or `OR` of a WHERE or HAVING on its own line**, fitting or not. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
 | **Jarvis Compact** | 2 space indents, wrap at 160, joins and predicates kept together |
 | **Jarvis River** | Every column on its own line with the comma in front |
 | **Jarvis Light** | Normalise whitespace and casing, change as few line breaks as possible |
@@ -1223,18 +1229,37 @@ Line breaking is driven by whether things **fit**. A short list stays on one lin
 past the right margin explodes one item per line. Set `List breaking` to `OnePerLine` if you would
 rather it always exploded.
 
-**A call's named parameters always go one per line**, under the call:
+**A `WHERE` or `HAVING` is broken at every `AND` and `OR`, fitting or not:**
 
 ```sql
-EXECUTE dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson
-    @ErrorCode = @ErrorCode,
-    @ErrorMessage = @ErrorMessage,
-    @OutputJson = @OutputJson OUTPUT;
+WHERE t1.UserIsActive = 1
+      AND t3.PatronIdTo = 1
+      AND t6.EventDateTime >= '2026-08-01'
 ```
 
-The shape `CREATE PROCEDURE` already uses for the parameters it declares, so a call and its
-declaration read alike — and indented under the call rather than aligned after the name, since a
-long name would otherwise leave fifty columns of nothing before anything is said.
+Breaking only what has run out of room leaves three conditions on one line inside a 200 column
+margin — the same unreadable line, where no single condition can be found, changed or reviewed,
+and a diff reports only that the line changed. This is to a predicate what one item per line is
+to a column list, and it has its own switch: **One condition per line**, under
+**Tools ▸ Options ▸ Jarvis ▸ Style**.
+
+A join's `ON` is **not** broken up. It goes on its own line under the join and stays whole there:
+it is one thought about how two tables meet, and splitting a two condition join over three lines
+buys nothing.
+
+**A call's named parameters always go one per line**, the first with the call and the rest lined
+up under it:
+
+```sql
+EXECUTE dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson @ErrorCode = @ErrorCode
+                                                      , @ErrorMessage = @ErrorMessage
+                                                      , @OutputJson = @IOJsonParams OUTPUT;
+```
+
+The comma leads here even though the rest of the style trails, because the list hangs off the end
+of the procedure's name rather than starting on a line of its own: a trailing comma out at column
+100 is invisible, while a leading one tucked under the first parameter marks the column the list
+runs down.
 
 Only named-parameter calls. `EXEC dbo.usp_Do 1, 2`, `EXEC ('SELECT 1')` and a call with a single
 parameter are left exactly as they were, and the return value of `EXEC @rc = dbo.usp_Do @a = 1`

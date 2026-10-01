@@ -46,6 +46,40 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   name still resolves on the command line and in a `.jarvis-sqlformat` file, so a checked-in team
   style or a build script passing `--style "Jarvis Gold"` keeps working instead of failing on a
   profile that went away.
+- **A commented out column lines up with the columns around it.** A `--` line inside a `SELECT`
+  list went to the far left, and the line after it inherited that position — so commenting one
+  column out threw the *next* one out of the list as well, and the alignment only recovered at
+  the one after that. Commenting a column out is how people try things, so it happened
+  constantly.
+  The list lines its items up at a column while a comment was being placed at an indent level;
+  the two are only the same thing until alignment moves a line right. A comment inside a broken
+  list now takes the list's column. Between clauses — a commented out `JOIN`, say — there is no
+  column to line up with, and those stay at the left where they were.
+- **IntelliSense reaches into another database.** `Reporting.dbo.` offered nothing, because the
+  catalogue holds exactly one database — four `sys.*` queries run inside the one the window is
+  connected to. A three part name now sends the lookup to the database it names, on the same
+  server and the same login, and the schema in front of the caret is read there. Bracketed and
+  mixed forms count too: `[Lesley_Data].[dbo].[`, `Reporting.[dbo].`.
+  Each database gets its own cached snapshot, because the cache is keyed on server *and*
+  database — so the first name into a database pays for reading it and nothing after that does.
+- **The selected row in the completion list is visible.** The list never takes keyboard focus —
+  the caret stays in the editor, which is the point of it — and WPF paints the selection of an
+  unfocused list in its *inactive* colour, a pale grey that says "this was selected once" rather
+  than "this is what Enter will insert". On a popup where the selection is the only thing that
+  matters, it was close to invisible. The row now has a template whose selected state does not
+  depend on focus, painted in the shell's own selection colours so it follows the theme.
+- **A note written beside a parameter stays beside it.** A comment after the comma of a list
+  went to a line of its own, taking the comma with it — so the note explaining `@PageIndex`
+  ended up introducing `@PageSize`, and a procedure header turned into an alternating column of
+  parameters and lone commas. A comment is kept with the line it was written on, and that is
+  decided by whether the line being built still has anything on it: the comma broke the line
+  first, so by the time the comment was reached the answer was no. It is now written before the
+  break.
+- **`NVARCHAR(MAX)` in a parameter list, not `NVARCHAR (MAX)`.** A procedure's parameters are
+  written without brackets of their own, so every bracket in the list sits at statement level and
+  was read as the *definition's* own bracket — the one that is deliberately padded. A data type's
+  size is never that bracket. `DECLARE` and `CREATE TABLE` were always right, which is what made
+  it look like a rule about parameters rather than a rule about brackets.
 - **A broken bracket indents from the line that opened it.** `MIN(x) OVER (PARTITION BY ...)`
   hanging off a column at column 21 put its list at column 4 — to the *left* of the expression
   that owns it — and its closing bracket at column 0.
@@ -99,12 +133,19 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   between a name and its bracket came from the retired Gold profile and is the one thing about
   it that surprised everyone who read the output — everywhere else in the language, and in every
   other formatter, a call is tight. Data types were already tight and stay that way.
-- **Each `AND` and `OR` of a predicate takes its own line.** Gold kept them with the predicate,
+- **Each `AND` and `OR` of a WHERE or HAVING takes its own line, whether or not it would have fitted.** Gold kept them with the predicate,
   on the grounds that a condition reads as one thought; in practice it produced lines nobody
   could read — `WHERE a = 1 AND b = 1 AND EXISTS (...)` gives no way to find, change or review a
   single condition, and a diff of it reports only that the line changed. This is the one thing
   the retired plainer profile did better, and it is what Standard does now.
-  The `ON` of a join keeps Gold's rule: the predicate goes on its own line under the join.
+  It breaks whether or not the clause would have fitted. Breaking only a predicate that has run
+  out of room leaves three conditions on one line inside a 200 column margin, which is the same
+  unreadable line for the same reason — this is to a predicate what one item per line is to a
+  column list. There is a switch for it, **One condition per line**, under
+  **Tools ▸ Options ▸ Jarvis ▸ Style**.
+  The `ON` of a join keeps Gold's rule and is **not** broken up: the predicate goes on its own
+  line under the join, but stays whole there. It is one thought about how two tables meet, and
+  splitting a two condition join over three lines buys nothing.
 - **F12 opens a module as `ALTER`.** SQL Server stores what was originally typed, so every
   definition came back beginning `CREATE` — and running it straight back fails with "There is
   already an object named ...", which says nothing about what the author actually did. Opened to
@@ -136,18 +177,27 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   genuinely end with it — `INSERT INTO t SELECT` and `WITH cte AS (...) SELECT` — or unless it
   follows `AS`, a comma, an operator, an opening bracket or a `UNION`, which is where a subquery
   and a union already lived.
-- **A call's named parameters go one per line.** `EXECUTE dbo.usp_Do @a = @a, @b = @b, …` came
-  out on a single line, where nothing shows which value belongs to which name and a diff of it
-  says only that the line changed. Each parameter now sits on its own line under the call — the
-  shape `CREATE PROCEDURE` already used for the parameters it declares, so a call and its
-  declaration read alike. Indented under the call rather than aligned after the procedure's name,
-  because a name like `dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson` leaves fifty columns of
-  nothing before anything is said.
+- **A call's named parameters go one per line, aligned under the first.**
+  `EXECUTE dbo.usp_Do @a = @a, @b = @b, …` came out on a single line, where nothing shows which
+  value belongs to which name and a diff of it says only that the line changed. The first
+  parameter now stays with the call and fixes the column the rest run down:
+
+  ```sql
+  EXECUTE dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson @ErrorCode = @ErrorCode
+                                                        , @ErrorMessage = @ErrorMessage
+                                                        , @OutputJson = @IOJsonParams OUTPUT;
+  ```
+
+  The comma leads here even though the house style trails, because the list hangs off the end of
+  the procedure's name rather than starting on a line of its own: a trailing comma out at column
+  100 is invisible, while a leading one tucked under the first parameter marks the column the
+  list is written down. That column is not knowable until the name has been written, so it is
+  taken at the first parameter rather than declared in advance.
   Only named-parameter calls: `EXEC dbo.usp_Do 1, 2`, `EXEC ('SELECT 1')` and a single-parameter
   call are untouched. The optional return value is stepped over, so the `@rc` of
   `EXEC @rc = dbo.usp_Do @a = 1, @b = 2` is not taken for the first argument — it is the first
-  variable in the statement, and breaking in front of it would put the procedure's own name on
-  the parameter list's line.
+  variable in the statement, and the list would otherwise line up under it with the procedure's
+  own name inside it.
 - **No semicolon inside an `OFFSET … FETCH` clause.** A paged query came back terminated after
   the `OFFSET`, which split one statement into two — and the second, a `FETCH` with no cursor,
   does not run at all. `FETCH` was on the list of words that always begin a statement, which is
