@@ -11,6 +11,18 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Changed**
 
+- **Columns come back through the alias.** Reported against
+  `SELECT * FROM dbo.TableRoadCrossings t1 WHERE Deleted = 1`: the list offered `Deleted`, so
+  the alias had to be typed in front of every column by hand.
+  Qualifying was tied to there being more than one table in scope — the case where a prefix is
+  the only way to tell two same named columns apart. But an alias is written to be used, and a
+  single aliased table is exactly the query where leaving the columns bare means going back over
+  them. A table carrying an alias now qualifies its columns whether it is alone in the statement
+  or not; a table without one is still left bare, since the only prefix on offer would be the
+  table name. Filtering is unchanged, so `Del` still finds `t1.Deleted` — the alias is written in
+  front of what you accepted, not something you have to type past. An `INSERT` column list stays
+  bare, where a qualified name does not parse.
+
 - **The map always opens.** It used to refuse with a message box when there was no results grid,
   no spatial column, or nothing drawable in one. That was wrong twice over: the map is worth
   having for the address search on its own, and a box saying "no geometry here" leaves somebody
@@ -46,6 +58,18 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
   name still resolves on the command line and in a `.jarvis-sqlformat` file, so a checked-in team
   style or a build script passing `--style "Jarvis Gold"` keeps working instead of failing on a
   profile that went away.
+- **A derived table's columns are offered.** `drv_01.` answered with nothing: a derived table was
+  recognised and then skipped everywhere, because its columns are in no catalogue — the table
+  exists only in the query that defines it. They are now read from its own `SELECT` list, by the
+  rule a reader uses: the name of an item is the last word in it. That covers a bare column, a
+  qualified one (`t1.CrossingID` is `CrossingID`), and an alias written with `AS` or without,
+  which is how `COUNT(1) COUNT` and `MAX(t1.CrossingID) CrossingID` get their names.
+  A call's own name is not taken as the name — `COUNT(*)` produces nothing the server would name
+  either — and nor is an expression like `a + 1`. Those are passed over rather than guessed at.
+  A `SELECT` nested inside the derived table names itself, not its parent, and a comma inside a
+  call does not split an item.
+  The columns are in scope unqualified as well, so a `SELECT` list above the derived table offers
+  them without the alias.
 - **A commented out column lines up with the columns around it.** A `--` line inside a `SELECT`
   list went to the far left, and the line after it inherited that position — so commenting one
   column out threw the *next* one out of the list as well, and the alignment only recovered at

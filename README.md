@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.1001.1.1**
+**Latest release: 2026.1002.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.1001.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1001.1.1/Jarvis.SSMSExtension-2026.1001.1.1.vsix).
+2026.1002.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1002.1.1/Jarvis.SSMSExtension-2026.1002.1.1.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1001.1.1/Jarvis.SSMSExtension-2026.1001.1.1.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1002.1.1/Jarvis.SSMSExtension-2026.1002.1.1.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -437,6 +437,27 @@ And it stays out of the places an alias does not belong:
 Turn it off, or change the letter, under **Tools ▸ Options ▸ Jarvis ▸
 IntelliSense**.
 
+### Columns come back through the alias
+
+An alias is written to be used, so once a statement has one, every column the list offers
+carries it — one table in scope or ten:
+
+```sql
+SELECT * FROM dbo.TableRoadCrossings t1
+WHERE t1.Deleted = 1          -- offered as t1.Deleted, not Deleted
+  AND t1.ReasonUpdate = 'Duplicate'
+```
+
+You still **type the column**: `Del` finds `t1.Deleted`, because the filtering runs on the bare
+name and the alias is simply written in front of what you accepted. Nothing has to be qualified
+by hand afterwards.
+
+A table with **no alias** is left bare — the only prefix available would be the table name,
+which is longer than the column and was never asked for. An `INSERT` column list is left bare
+too, since `INSERT INTO t (t1.Col)` does not parse. Where two tables are in scope the columns
+are qualified whether or not anyone wrote an alias, because otherwise there is no telling two
+same named columns apart.
+
 ### Everything in the database, not just tables
 
 Tables, views, **stored procedures**, scalar and table valued functions are all read and all
@@ -626,6 +647,25 @@ predicates, no parameters means no call templates. Neither costs the columns.
 their own, so switching tabs switches catalogue with them — and a background load finishing for
 one database never changes what another window sees. The list header names the database it is
 drawing from, so with several tabs open you can see at a glance which one you are getting.
+
+**A derived table's columns come from the query, not the catalogue.** Nothing on the server knows
+them — the table exists only where it is written — so they are read off its own `SELECT` list:
+
+```sql
+SELECT drv_01.          -- Road_Name_1, Road_Name_2, x, y, COUNT, CrossingID
+FROM (   SELECT Road_Name_1, Road_Name_2, x, y,
+                COUNT(1) COUNT,
+                MAX(t1.CrossingID) CrossingID
+         FROM dbo.TableRoadCrossings t1
+         GROUP BY Road_Name_1, Road_Name_2, x, y
+         HAVING (COUNT(1) > 1) ) AS Drv_01;
+```
+
+The name of an item is the last word in it, which is the rule you read by: a bare column, a
+qualified one — `t1.CrossingID` is `CrossingID` — and an alias written with `AS` or without. An
+expression with no name on the end, such as `a + 1` or a bare `COUNT(*)`, is passed over rather
+than guessed at, because the server would not name it either. The columns are in scope without
+the alias having been typed, and come back carrying it — `Drv_01.CrossingID`.
 
 **A three part name reaches into another database.** Type `Reporting.dbo.` and the list is drawn
 from `Reporting`, on the same server and the same login — bracketed and mixed forms too, so
