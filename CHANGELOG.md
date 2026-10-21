@@ -433,6 +433,17 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Fixed**
 
+- **An alias in front of a column was read as a database name.** Reported against
+  `SELECT * FROM dbo.GIS_NAD t1 WHERE t1.Geom.`, which answered with
+  *Cannot open database "t1" requested by the login*.
+  A column reached through its alias has exactly the shape of a three part name, so `t1.Geom.`
+  was read the way `Reporting.dbo.` is read — as a database, a schema, and something being
+  typed — and the extension went off to open a database called t1 before it had looked at
+  anything else. The same was true of `dbo.Orders.`, where the first part is a schema.
+  Which of the two a name is now gets decided before any connection is changed: a first part
+  that is an alias in the query, a table the query already names, or the schema of one, is not
+  a database. A genuine three part name still reaches into the database it names, including
+  while it is being typed in a FROM.
 - **Pasting an x and a y into the map's search box kept only the last number.** Reported with a
   pair copied out of the results grid, which is how anybody gets a coordinate — nobody types
   one. Two cells copied across a row arrive with a tab between them, two copied down a column

@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.1021.1.1**
+**Latest release: 2026.1021.1.2**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.1021.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.1/Jarvis.SSMSExtension-2026.1021.1.1.vsix).
+2026.1021.1.2 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.2/Jarvis.SSMSExtension-2026.1021.1.2.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.1/Jarvis.SSMSExtension-2026.1021.1.1.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.2/Jarvis.SSMSExtension-2026.1021.1.2.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -739,6 +739,12 @@ from `Reporting`, on the same server and the same login — bracketed and mixed 
 `[Lesley_Data].[dbo].[` and `Reporting.[dbo].` both work. The schema in front of the caret is
 still read as a schema; it is simply read in that catalogue. Each database gets its own cached
 snapshot, so the first name into one pays for reading it and nothing after that does.
+
+**Only when it really is a database.** `t1.Geom.` has the same three part shape and means
+nothing of the kind — `t1` is an alias and `Geom` is one of its columns — and so does
+`dbo.Orders.`, where the first part is a schema. A first part that is an alias in the query, a
+table the query already names, or the schema of one, is never treated as a database, so nothing
+goes off to open a connection to `t1`.
 
 **Jarvis ▸ IntelliSense ▸ Refresh Metadata** (Ctrl+K, Ctrl+R) re-reads just the database of the window you
 are in, when you have just changed a table. The others stay cached.
