@@ -1,63 +1,88 @@
-# Jarvis Gold — the aligned style
+# The Jarvis house style
 
-A **column aligned** style: clause keywords take a single space, and everything after them lines
-up under the first item rather than at a fixed indent.
+A **column aligned river** style: clause keywords are padded to a common width so every clause
+body starts in one column, lists line up under their first item with the comma in front, and a
+join hangs under the table it joins to.
 
-> **Changed.** Gold began as the river style taken from `Pms.Pms_Sp_Patron_Create` — clause
-> keywords padded to a common width, leading commas. It was redefined to the shape below.
-> `Jarvis River` still has leading commas if you want them back.
+> **Changed twice.** It began as the river style taken from `Pms.Pms_Sp_Patron_Create`, was
+> redefined for a while to a plainer shape — one space after the keyword, trailing commas, the
+> `ON` on a line of its own — and has been returned to the river, which is what the scripts it
+> was taken from are actually written in.
 
-## 1. Clause keywords take one space; the body lines up under the first item
+## 1. Clause keywords are padded into one river
+
+The widest keyword phrase in the statement sets the column every body starts in:
 
 ```sql
-SELECT @a = SD.StateDivisionId,
-       @b = SD.StateDivisionHierarchy
-FROM Pub.Pub_Tb_StateDivision SD
-WHERE SD.StateDivisionIsBase = 1;
+SELECT   o.orderid
+       , o.orderdate
+FROM     dbo.orders o
+WHERE    o.orderdate >= '2024-01-01'
+GROUP BY o.orderid;
 ```
 
-No padding after the keyword. The list anchors on wherever its first item landed, so a second
-line sits directly under the first.
+`GROUP BY` and `ORDER BY` count as one phrase, which is what makes them line up with `SELECT`.
+With no two word clause in the statement the river is seven columns wide and `SELECT` takes a
+single space.
 
-## 2. Trailing commas
+## 2. Leading commas, two columns left of the items
 
 ```sql
-SELECT alpha,
-       bravo,
-       charlie
-FROM dbo.t;
+SELECT alpha
+     , bravo
+     , charlie
+FROM   dbo.t;
+```
+
+The comma hangs two columns to the left of the item column, so every item — the first included —
+starts in the same column and the commas make a line down the margin. Adding a name to the end
+of a list touches one line in the diff instead of two.
+
+`DISTINCT` and `TOP (n)` belong to the keyword phrase, so the list anchors past them:
+
+```sql
+SELECT DISTINCT alpha
+              , bravo
+FROM   dbo.t;
 ```
 
 ## 3. DECLARE and SET both align their name, type and value columns
 
 ```sql
-DECLARE @ErrorCode       INT           = 0,
-        @ErrorMessage    NVARCHAR(MAX),
-        @ErrorKey        VARCHAR(250),
-        @IsTranBegunHere BIT           = 0;
+DECLARE @ErrorCode       INT           = 0
+      , @ErrorMessage    NVARCHAR(MAX)
+      , @ErrorKey        VARCHAR(250)
+      , @IsTranBegunHere BIT           = 0;
 ```
 
 ```sql
 UPDATE t1
-SET t1.NAME_ALT       = t2.NAME_ALT,
-    t1.CouldBeForeign = t2.CouldBeForeign,
-    t1.GeoSuburb      = t2.GeoSuburb
+SET    t1.NAME_ALT       = t2.NAME_ALT
+     , t1.CouldBeForeign = t2.CouldBeForeign
+     , t1.GeoSuburb      = t2.GeoSuburb
 ```
 
 A declaration with no value ends at its type: the padding that would line the `=` up is
 suppressed when only a comma follows it, so no line reads `VARCHAR(250)     ,`.
 
-## 4. A join predicate goes on its own line; AND and OR stay with it
+## 4. A join hangs under the FROM; its predicate rides on the join line
 
 ```sql
-FROM dbo.TableSuburbs t1
-INNER JOIN DGS_SouthAfrica_Stage.dbo.TableSuburbs t2
-    ON t2.NAME = t1.NAME AND t2.city = t1.CITY AND t2.PROVINCE = t1.PROVINCE
-WHERE t1.CITY_OFFICIAL IS NULL OR t1.CITY_OFFICIAL = '';
+FROM   dbo.TableSuburbs t1
+       INNER JOIN DGS_SouthAfrica_Stage.dbo.TableSuburbs t2 ON t2.NAME = t1.NAME
+                                                               AND t2.city = t1.CITY
+                                                               AND t2.PROVINCE = t1.PROVINCE
+WHERE  t1.CITY_OFFICIAL IS NULL
+       OR t1.CITY_OFFICIAL = '';
 ```
 
-The join sits at the statement's own indent rather than under the FROM item. `AND` and `OR` do
-not take a line each — a predicate reads as one thought.
+The join lines up under the first table of the `FROM`, not in the river of clause keywords, so
+what the query selects *from* reads as one block. Which two tables meet, and the first thing
+that makes them meet, stay on one line; every further `AND` or `OR` takes a line of its own,
+lined up under the predicate it belongs to.
+
+Each join anchors its own conditions, so a join that follows a long predicate still comes back
+to the `FROM` column rather than walking further across the page.
 
 ## 5. Every statement is terminated
 
@@ -101,17 +126,20 @@ IF (
 ```
 
 The first WHEN rides on the CASE line; THEN steps in one indent under it; later WHENs and the
-ELSE return to the first WHEN column; END returns to the CASE column. A CASE that fits on one
-line is still left there.
+ELSE return to the first WHEN column; END returns to the CASE column.
+
+**A CASE that fits on one line is laid out anyway.** It is the decision the query makes, and its
+arms are what anyone reading has come to check; fitting inside the margin does not make it one
+thought. `CASE WHEN a = 1 THEN 'y' ELSE 'n' END` is four lines here, and worth them.
 
 ## 8. An INSERT column list breaks one name per line, inside its bracket
 
 ```sql
-INSERT INTO TMgr.Tb_JobRequestFile ( JobRequestId,
-                                     JobTypeFileTypeId,
-                                     Filename,
-                                     FileSize,
-                                     UserId_UploadedBy )
+INSERT INTO TMgr.Tb_JobRequestFile ( JobRequestId
+                                   , JobTypeFileTypeId
+                                   , Filename
+                                   , FileSize
+                                   , UserId_UploadedBy );
 ```
 
 The bracket is padded inside, so the names start two columns past it and every comma lands
@@ -128,8 +156,9 @@ because reading it is how you check it against the `VALUES` underneath.
 
 ```sql
 SET @VTResult = (   SELECT TOP 1 VTLocationTypeResult
-                    FROM @TblPhones AS TFT
-                    WHERE LocationTypeId IS NOT NULL AND dbJarvisFunctions.Pub.Pub_Fn_OutputJsonIsSuccessful (TFT.VTLocationTypeResult) = 0 );
+                    FROM   @TblPhones AS TFT
+                    WHERE  LocationTypeId IS NOT NULL
+                           AND dbJarvisFunctions.Pub.Pub_Fn_OutputJsonIsSuccessful(TFT.VTLocationTypeResult) = 0 );
 ```
 
 The closing parenthesis stays on the last line.
@@ -145,8 +174,15 @@ BEGIN
 ```
 
 ```sql
-EXECUTE @IOJsonParamsTemp = Pub.Pub_Fn_Check @RequestInfo = @RequestInfoJson, @GlobalTableCode = 'PmsPatron', @DataJson = @DataJson, @GTCD = @GTCD;
+EXECUTE @IOJsonParamsTemp = Pub.Pub_Fn_Check @RequestInfo = @RequestInfoJson
+                                           , @GlobalTableCode = 'PmsPatron'
+                                           , @DataJson = @DataJson
+                                           , @GTCD = @GTCD;
 ```
+
+A call's named parameters go one per line, the first with the call and the rest lined up under
+it — the same shape as every other list in the style.
+
 
 ## 11. Blocks
 

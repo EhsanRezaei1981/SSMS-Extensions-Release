@@ -10,7 +10,7 @@ It started as a formatter and is no longer only that. Under one **Jarvis** menu:
 | | |
 |---|---|
 | **Format** | `Ctrl+K, Ctrl+D` lays the script out to your house style, and every format is checked token by token before it is applied |
-| **IntelliSense** | a completion list that knows your schema — tables, columns, procedures, functions, join predicates read off the foreign keys, and aliases numbered for you |
+| **IntelliSense** | a completion list that knows your schema — tables, columns, procedures, functions, join predicates read off the foreign keys, aliases numbered for you, and the `geometry`, `geography`, `hierarchyid` and `xml` methods no catalogue carries |
 | **Snippets** | a shortcut and Tab, from a file that is yours to edit |
 | **Query history** | every query you run, searchable by text, server and date |
 | **Export** | the results grid to a real `.xlsx` or to pipe delimited CSV, split into files you can actually open |
@@ -21,7 +21,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 
 ## Download and install
 
-**Latest release: 2026.1002.1.1**
+**Latest release: 2026.1021.1.1**
 
 ### ⬇ [Download Jarvis for SSMS](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/latest/download/Jarvis.SSMSExtension-latest.vsix)
 
@@ -29,7 +29,7 @@ Built and verified against **SSMS 22.6.0** (shell 18.x, .NET Framework 4.7.2, x6
 is the whole install — SSMS's own installer does it, and there is nothing to extract.
 
 That link always gives you the newest release, so it is safe to bookmark or pass on. This one is
-2026.1002.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1002.1.1/Jarvis.SSMSExtension-2026.1002.1.1.vsix).
+2026.1021.1.1 — [or pick a specific version](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.1/Jarvis.SSMSExtension-2026.1021.1.1.vsix).
 
 SSMS has to be closed: a running instance holds the extension registry open and the install
 fails with nothing installed.
@@ -37,7 +37,7 @@ fails with nothing installed.
 ### If you would rather use a script
 
 Every release also carries a
-[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1002.1.1/Jarvis.SSMSExtension-2026.1002.1.1.zip).
+[zip of the extension and the install scripts](https://github.com/EhsanRezaei1981/SSMS-Extensions-Release/releases/download/v2026.1021.1.1/Jarvis.SSMSExtension-2026.1021.1.1.zip).
 Extract it, close SSMS, and run `.\install.ps1` from the extracted folder.
 
 It does more than double clicking does: it checks SSMS is closed and says which process is
@@ -486,6 +486,73 @@ straightforward. With several tables in scope each keeps its own order and they 
 interleave. Everything else stays alphabetical.
 
 Nothing but columns is offered after a dot — `u.INNER JOIN` is not a thing.
+
+### The methods SQL Server brings with it
+
+A `geometry` column has forty methods on it and no catalogue has any of them: `sys.objects`
+knows nothing about `STIntersects`. So a list built from the catalogue alone had nothing at all
+to say after the dot on a spatial column, which is exactly where the help is wanted — the names
+are long, there are a lot of them, and none of them is guessable.
+
+Put a dot after anything declared `geometry`, `geography`, `hierarchyid` or `xml` — a column, a
+variable, a procedure parameter — and its own methods come up, with their arguments:
+
+```
+ SELECT t1.Shape.
+ ┌──────────────────────────────────────────────────────┐
+ │ STArea                              () float         │
+ │ STAsText                            () nvarchar      │
+ │ STBuffer                     (distance) geometry     │
+ │ STDistance                      (other) float        │
+ │ STIntersects                    (other) bit          │
+ │ STSrid                                  int          │
+ └──────────────────────────────────────────────────────┘
+```
+
+The arguments are the point. A column of forty names tells you which methods exist, which you
+could have guessed; `(other, matrix) bit` beside `STRelate` tells you how to call it.
+
+**A property comes without brackets.** `STSrid`, `STX`, `STY`, `Lat`, `Long`, `HasZ` are
+properties, and `@g.Lat()` does not compile — so they are offered as they are written.
+
+**Each type gets its own list**, which settles the one that catches everybody out: `geometry`
+has `STX` and `STY`, `geography` has `Lat` and `Long`, and neither offers the other's.
+
+**The type itself answers to `::`**, for the static constructors:
+
+```
+ SELECT geometry::
+ ┌──────────────────────────────────────────────────────┐
+ │ Parse                            (text) geometry     │
+ │ Point                     (x, y, srid) geometry      │
+ │ STGeomFromText             (text, srid) geometry     │
+ │ STPointFromText            (text, srid) geometry     │
+ └──────────────────────────────────────────────────────┘
+```
+
+`geometry::Point(x, y, srid)` and `geography::Point(lat, long, srid)` take their arguments the
+other way round from each other, which the list says out loud — it is a better way to find out
+than a point in the Atlantic.
+
+An ordinary column is unaffected: a dot after a `varchar` is not a method call, and an alias
+still answers with the table's columns.
+
+### Built in functions carry their arguments
+
+Every built in function is offered, and the ones whose arguments are worth stating carry them
+instead of the word "function":
+
+```
+ DATEADD              (datepart, number, date)
+ CHARINDEX            (find, within [, start])
+ ISNULL               (expression, replacement)
+ ROW_NUMBER           () OVER (...)
+ STRING_SPLIT         (string, separator)
+```
+
+That a function called `DATEADD` exists is not news to anybody typing `datead`. The order of
+its three arguments is the thing nobody remembers.
+
 
 ```
  Columns of TMGR.Tb_JobRequest  (4)
@@ -979,6 +1046,38 @@ Eight to choose from, switchable on the window itself:
 Keys go in **Tools ▸ Options ▸ Jarvis ▸ Map**, one per provider — Azure's two entries share the
 one Azure key.
 
+#### Keys are stored encrypted
+
+A map key is a billable credential. Jarvis encrypts every one of them with **DPAPI under your
+Windows account** before it goes anywhere near the settings store, so what sits in the registry
+is ciphertext rather than the key:
+
+```
+TomTom API key    jarvis:enc:v1:AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA...
+```
+
+Paste the key as the provider gave it to you; it is encrypted the moment you enter it, and the
+box reads back as ciphertext afterwards. That is the key, encrypted — not a mask over it, and
+not a different key. It is decrypted only to be sent to the provider when a map is drawn or an
+address is searched for, which is what a key is for.
+
+**Keys saved before this still work.** They are read as they are, used as they are, and quietly
+rewritten encrypted the next time Jarvis starts. Nothing to do and nothing to re-enter.
+
+**A key encrypted under a different account cannot be read back.** That is the point of DPAPI
+and the one thing it costs: carry a settings export to another machine, or open SSMS under
+another Windows login, and the key in the box is unreadable there. Nothing can recover it — so
+the map says exactly that rather than claiming no key was entered, and points at the box you
+need to paste it into again:
+
+> TomTom has a key saved, but it was encrypted for a different Windows account or a different
+> machine, so it cannot be read here and this is OpenStreetMap. Enter the key again under Tools,
+> Options, Jarvis, Map.
+
+The map draws OpenStreetMap in the meantime, as it does whenever a key is missing, so the
+geometry is still on screen while you sort the key out.
+
+
 **With no key at all, the map draws OpenStreetMap.** It needs none, so a fresh install shows your
 geometry immediately without anybody visiting a developer portal first. The provider list moves
 to OpenStreetMap along with the map, so the box never names something other than what is on
@@ -1077,9 +1176,14 @@ a query usually wants to know where it actually is. The status line names the x 
 the latitude and longitude, so a point that landed oddly can be read rather than guessed at.
 
 A number past 90 can only be a longitude, so most real coordinates sort themselves out whichever
-order they were typed in; the country settles the rest. Comma, space, tab or semicolon all
-separate the pair, and the numbers are read invariantly so a machine set to a comma decimal
-separator reads them the same.
+order they were typed in; the country settles the rest. Comma, space, tab, semicolon **or a line
+break** all separate the pair, and the numbers are read invariantly so a machine set to a comma
+decimal separator reads them the same.
+
+**Paste it straight out of the grid.** Nobody types a coordinate: they copy two cells, which come
+across with a tab between them from a row and a line break from a column, and a trailing newline
+either way. All of it is laid onto one line as it goes into the box, so both numbers arrive —
+`28.05` and `-26.20` pasted together are one point, not whichever of them happened to be last.
 
 ### Address search
 
@@ -1225,7 +1329,7 @@ this formatter was built to produce.
 
 | Profile | What it looks like |
 |---|---|
-| **Jarvis Standard** *(default)* | Aligned: one space after the clause keyword, lists under their first item, trailing commas, DECLARE and SET aligning their `=`, `ON` on its own line, and **each `AND` or `OR` of a WHERE or HAVING on its own line**, fitting or not. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
+| **Jarvis Standard** *(default)* | The river: clause keywords padded to a common width, lists under their first item with **leading commas**, joins hanging under the FROM with their `ON` on the join line, DECLARE and SET aligning their `=`, every `CASE` laid out, and **each `AND` or `OR` on its own line**, fitting or not. Written up in [docs/jarvis-gold-style.md](docs/jarvis-gold-style.md) |
 | **Jarvis Compact** | 2 space indents, wrap at 160, joins and predicates kept together |
 | **Jarvis River** | Every column on its own line with the comma in front |
 | **Jarvis Light** | Normalise whitespace and casing, change as few line breaks as possible |
@@ -1233,8 +1337,7 @@ this formatter was built to produce.
 
 **Jarvis Gold has been retired.** It was the aligned style above under a second name, beside a
 plainer Standard that existed only because it was what the formatter could do first — two house
-styles, one too many. Standard *is* that style now, with one change: each `AND` and `OR` of a
-predicate takes its own line, which is the one thing the plainer profile did better.
+styles, one too many. Standard *is* that style now.
 
 If you had Gold selected, Jarvis moves you to Standard the next time it starts, so nobody is left
 on a profile that no longer exists. The name still works in a `.jarvis-sqlformat` file and on the
@@ -1251,13 +1354,22 @@ where o.orderdate>='2024-01-01' and o.status in (1,2,3) group by o.orderid,o.ord
 ### After
 
 ```sql
-SELECT o.orderid, o.orderdate, c.companyname AS Customer, SUM(od.quantity * od.unitprice) AS Total
-FROM dbo.orders o
-INNER JOIN dbo.customers c
-    ON c.customerid = o.customerid
-WHERE o.orderdate >= '2024-01-01' AND o.status IN (1, 2, 3)
-GROUP BY o.orderid, o.orderdate, c.companyname
+SELECT   o.orderid
+       , o.orderdate
+       , c.companyname AS Customer
+       , SUM(od.quantity * od.unitprice) AS Total
+FROM     dbo.orders o
+         INNER JOIN dbo.customers c ON c.customerid = o.customerid
+WHERE    o.orderdate >= '2024-01-01'
+         AND o.status IN (1, 2, 3)
+GROUP BY o.orderid
+       , o.orderdate
+       , c.companyname;
 ```
+
+`GROUP BY` is the widest keyword here, so it sets the column every clause body starts in. The
+join hangs under the table it joins to rather than joining that river, so what the query selects
+*from* reads as one block.
 
 Every statement is given the semicolon it is missing, whichever style is picked. Never after
 BEGIN, AS, THEN, ELSE, a label, a comma or an operator, and never twice. It is the only setting
@@ -1272,10 +1384,11 @@ rather it always exploded.
 **A `WHERE` or `HAVING` is broken at every `AND` and `OR`, fitting or not:**
 
 ```sql
-WHERE t1.UserIsActive = 1
-      AND t3.PatronIdTo = 1
-      AND t6.EventDateTime >= '2026-08-01'
+WHERE  t1.UserIsActive = 1
+       AND t3.PatronIdTo = 1
+       AND t6.EventDateTime >= '2026-08-01'
 ```
+
 
 Breaking only what has run out of room leaves three conditions on one line inside a 200 column
 margin — the same unreadable line, where no single condition can be found, changed or reviewed,
@@ -1283,9 +1396,38 @@ and a diff reports only that the line changed. This is to a predicate what one i
 to a column list, and it has its own switch: **One condition per line**, under
 **Tools ▸ Options ▸ Jarvis ▸ Style**.
 
-A join's `ON` is **not** broken up. It goes on its own line under the join and stays whole there:
-it is one thought about how two tables meet, and splitting a two condition join over three lines
-buys nothing.
+**A join's `ON` is broken the same way**, and rides on the join line rather than taking one of
+its own:
+
+```sql
+FROM   Sec.Sec_Tb_UserMembership AS STUM
+       INNER JOIN Sec.Sec_Tb_User AS STU ON STU.UserId = STUM.UserId
+                                            AND STU.UserIsActive = 1
+```
+
+Which two tables meet, and the first thing that makes them meet, stay on one line. A join with
+three conditions is three thoughts, and with the `ON` up on the join line a second condition
+would otherwise push that line well past the margin. Each join anchors its own conditions, so a
+join following a long predicate still comes back to the `FROM` column.
+
+**Every `CASE` is laid out**, whether or not it fits:
+
+```sql
+SELECT DISTINCT CASE WHEN STG.GroupId = STG2.GroupId
+                         THEN STG.GroupId
+                     ELSE STG2.GroupId
+                END GroupId
+              , CASE WHEN STG.GroupId = STG2.GroupId
+                         THEN STG.GroupIsAdmin
+                     ELSE STG2.GroupIsAdmin
+                END GroupIsAdmin
+```
+
+A `CASE` is the decision the query makes, and its arms are what anyone reading has come to
+check. Three of them crammed onto three long lines is the thing this style exists to prevent.
+`DISTINCT` and `TOP (n)` belong to the keyword phrase, so the list lines up past them rather
+than under a bare `SELECT`. It has its own switch: **Allow a CASE on one line**, under
+**Tools ▸ Options ▸ Jarvis ▸ Style**.
 
 **A call's named parameters always go one per line**, the first with the call and the rest lined
 up under it:
@@ -1296,9 +1438,8 @@ EXECUTE dbJarvisFunctions.Pub.Pub_Sp_GenerateOutputJson @ErrorCode = @ErrorCode
                                                       , @OutputJson = @IOJsonParams OUTPUT;
 ```
 
-The comma leads here even though the rest of the style trails, because the list hangs off the end
-of the procedure's name rather than starting on a line of its own: a trailing comma out at column
-100 is invisible, while a leading one tucked under the first parameter marks the column the list
+The comma leads here as it does everywhere else in the style: a trailing comma out at column 100
+is invisible, while a leading one tucked under the first parameter marks the column the list
 runs down.
 
 Only named-parameter calls. `EXEC dbo.usp_Do 1, 2`, `EXEC ('SELECT 1')` and a call with a single

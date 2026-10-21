@@ -11,6 +11,48 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Changed**
 
+- **Map provider API keys are encrypted at rest.** They were written to the settings store
+  exactly as typed, which left a billable credential sitting in clear text under HKCU — readable
+  by anything running as you, and carried along by every settings export, roaming profile and
+  backup that ever touched it.
+  Each key is now encrypted with DPAPI under your Windows account before it is stored, behind a
+  `jarvis:enc:v1:` marker, and the options box reads back as ciphertext: that is the key
+  encrypted, not a mask over it. It is decrypted only to be sent to the provider when a map is
+  drawn or an address is looked up, which is what a key is for.
+  **A key saved before this keeps working.** It is read as it stands, used as it stands, and
+  rewritten encrypted the next time Jarvis starts — nothing to re-enter, and no map goes blank
+  over it.
+  What DPAPI costs is that the blob belongs to one account on one machine. A settings store
+  carried to another machine, or opened under another Windows login, holds a key nothing there
+  can decrypt — so rather than claim no key was entered, which is plainly untrue with one
+  sitting in the box, the map says what actually happened: *"TomTom has a key saved, but it was
+  encrypted for a different Windows account or a different machine, so it cannot be read here
+  and this is OpenStreetMap. Enter the key again under Tools, Options, Jarvis, Map."* The map
+  draws OpenStreetMap meanwhile, so the geometry is still on screen while the key is sorted out.
+
+- **The house style is the river again.** Reported against a membership query that came back as
+  three hundred-character `CASE` lines and a column of joins nobody could scan.
+  Four settings of Jarvis Standard moved, and together they are the style the scripts this
+  formatter was taken from are actually written in:
+  **leading commas**, two columns left of the item column, so every item starts in the same
+  one and adding a name to a list touches one line in the diff instead of two;
+  **clause keywords padded to a common width**, so every clause body in a statement starts in
+  one column and a join hangs under the table it joins to rather than joining that river;
+  **the `ON` on the join line**, because which two tables meet and the first thing that makes
+  them meet is one line to read; and
+  **every `CASE` laid out**, fitting or not, because a `CASE` is the decision the query makes
+  and its arms are what anyone reading has come to check.
+  Anyone on Jarvis Standard picks this up on the next format — the profile is stored by name,
+  not as a copy of its settings. Jarvis Custom is untouched, and so are Compact, River and
+  Light. Every one of the four is a switch on **Tools ▸ Options ▸ Jarvis ▸ Style** for anyone
+  who wants a piece of it back.
+- **A join's `ON` is broken at each condition too.** It used to be the one predicate left whole,
+  on the grounds that a join is one thought about how two tables meet. A join carrying three
+  conditions is three thoughts — and with the `ON` now up on the join line, a second condition
+  pushed the line well past the margin. Each join anchors its own conditions, so a join that
+  follows a long predicate still comes back to the `FROM` column instead of walking further
+  across the page behind it.
+
 - **Columns come back through the alias.** Reported against
   `SELECT * FROM dbo.TableRoadCrossings t1 WHERE Deleted = 1`: the list offered `Deleted`, so
   the alias had to be typed in front of every column by hand.
@@ -391,6 +433,45 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Fixed**
 
+- **Pasting an x and a y into the map's search box kept only the last number.** Reported with a
+  pair copied out of the results grid, which is how anybody gets a coordinate — nobody types
+  one. Two cells copied across a row arrive with a tab between them, two copied down a column
+  with a line break, and the grid puts a newline on the end of both.
+  The box is one line, which is right for a place name or a pair of numbers. But a single line
+  TextBox does not refuse text with a line break in it and does not keep the first line either:
+  it keeps the last. So half the coordinate was dropped on the way in, and what was left sat
+  there looking exactly like what had been pasted. Pasted text is now laid onto one line as it
+  goes in, so both numbers arrive.
+  The parser had the same blind spot behind it — it separated a pair on a comma, space, tab or
+  semicolon but not on a line break, so even a newline that survived would not have parsed. It
+  does now, trailing ones and blank lines included. Three numbers are still not a coordinate.
+- **`DISTINCT` and `TOP (n)` threw the list out of column.** Reported as ragged output: in
+  `SELECT DISTINCT a, b, c` the first item landed past `DISTINCT` while every item after it
+  lined up under a bare `SELECT`, two words to the left of the one it was meant to sit beneath.
+  The list was anchored the moment the keyword was written, before the modifiers that follow it
+  had been. It is now anchored on the column the first item actually lands in. A plain `SELECT`
+  is unchanged, having nothing in between to step over.
+- **A note at the end of a list item stayed with the comma instead of the item.** With the comma
+  now leading, `a, -- first` has to come out as `a -- first` and then `, b`: the note was written
+  about `a`, and the comma belongs to `b`. It was going out as `a` then `, -- first` then `b`,
+  which put the note on the comma's line and left it introducing the wrong item — the same fault
+  the procedure parameter lists had, in a new place.
+- **A commented out column left the comma stranded.** The comma for the item below was written
+  first, the comment then forced a line break, and the comma was left alone on a line of its own
+  above the note. Comments between a comma and the item it introduces now go out ahead of it.
+- **The safety check no longer refuses a leading comma.** It compared the two token streams in
+  strict order, so a comma written on the far side of a comment read as a rewritten script and
+  the format was rejected outright. It now makes two passes — one over the stream without its
+  comments, which proves the SQL is untouched down to every comma, and one over the stream
+  without its commas, which proves every comment survived in order. The only thing left unpinned
+  is which side of a comment a comma sits on, which SQL reads the same either way.
+- **A bracket opened on a line that starts with a comma anchored on the comma.** A window
+  function's `PARTITION BY` list, and anything else opened part way along a continuation line,
+  put its contents and its closing bracket two columns to the left of the expression that owned
+  them. A leading comma is margin, not content.
+- **The completion list's own column lists did not line up.** Expanding `SELECT *` or filling in
+  an `INSERT` column list padded the leading comma to the item column, which pushed every name
+  after the first two columns right of the one it was meant to line up with.
 - **It no longer installs itself into Visual Studio.** The manifest listed Visual Studio
   Community, Pro and Enterprise as targets, so VSIXInstaller offered Visual Studio alongside
   SSMS and had it ticked by default — the extension arrived in Visual Studio without anybody
@@ -417,6 +498,29 @@ of 3 September 2026. The day is one number because a VSIX version holds exactly 
 
 **Added**
 
+- **The methods SQL Server brings with it are offered.** Reported: the list is no help on built
+  in functions, and on the spatial ones it had nothing to say at all — which was literally true.
+  A `geometry` column has forty methods on it and no catalogue carries any of them: `sys.objects`
+  knows nothing about `STIntersects`, so a list built from the catalogue answered a dot after a
+  spatial column with an empty list. That is the one place the help is actually needed, because
+  the names are long, there are a lot of them, and none of them is guessable.
+  A dot after anything declared `geometry`, `geography`, `hierarchyid` or `xml` — a column, a
+  variable, a procedure parameter — now offers that type's own methods, each with its arguments
+  and what it gives back: `STDistance` reads `(other) float`, `STRelate` reads
+  `(other, matrix) bit`. Properties come without brackets, since `@g.Lat()` does not compile.
+  Each type gets its own list, which settles the one that catches everybody out: `geometry` has
+  `STX` and `STY`, `geography` has `Lat` and `Long`, and neither offers the other's.
+  The type itself answers to `::` for the static constructors, where it also says that
+  `geometry::Point(x, y, srid)` and `geography::Point(lat, long, srid)` take their arguments the
+  other way round from each other — a better way to find that out than a point in the Atlantic.
+  Only members that certainly exist are listed. A list that invents a method is worse than one
+  missing a few: a gap sends you to the documentation, an invention sends you to a syntax error
+  wondering why the tool suggested it.
+- **Built in functions carry their arguments instead of the word "function".** `DATEADD` now
+  reads `(datepart, number, date)`, `CHARINDEX` reads `(find, within [, start])`, `ROW_NUMBER`
+  reads `() OVER (...)`. That a function called DATEADD exists is not news to anybody typing
+  "datead"; the order of its three arguments is the thing nobody remembers. The ones whose name
+  is the whole story, `GETDATE` and `NEWID` among them, keep the plain label.
 - **Ctrl+K, Ctrl+M** opens the map. Global scope rather than editor scope, unlike the other
   Ctrl+K bindings: the map is about the results grid, so the key has to work with the focus in
   the grid and not only in the editor.
